@@ -268,6 +268,7 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
       <div class="nav-item" onclick="showPage('announcements')"><span class="ni">📢</span>Announcements<span class="nbadge" id="nbAnn">0</span></div>
       <div class="nav-item" onclick="showPage('leaderboard')"><span class="ni">📊</span>Leaderboard</div>
       <div class="nav-item" onclick="showPage('gallery')"><span class="ni">🖼</span>Gallery</div>
+      <div class="nav-item" onclick="showPage('publish')" style="color:var(--green);border-left-color:rgba(0,229,122,.0)"><span class="ni">🚀</span>Publish</div>
       <div class="nav-section">TOOLS</div>
       <div class="nav-item" onclick="showPage('templates')"><span class="ni">🎨</span>Templates</div>
       <div class="nav-section">SETTINGS</div>
@@ -691,6 +692,76 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
         <div id="galleryGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px"></div>
       </div>
 
+      <!-- ── PUBLISH ── -->
+      <div class="page" id="page-publish">
+        <div class="prog-header">
+          <h2>🚀 PUBLISH</h2>
+          <div style="font-size:.75rem;color:var(--muted);font-family:'Space Mono',monospace">Generate public HTML → Upload to GitHub</div>
+        </div>
+
+        <!-- Status card -->
+        <div class="card" style="margin-bottom:14px;border:1px solid rgba(0,229,122,.2);background:rgba(0,229,122,.05)">
+          <div style="display:flex;align-items:center;gap:14px">
+            <div style="font-size:2rem">🚀</div>
+            <div style="flex:1">
+              <div style="font-family:'Bebas Neue',cursive;letter-spacing:2px;font-size:1rem;color:var(--green);margin-bottom:3px">HOW IT WORKS</div>
+              <div style="font-size:.78rem;color:var(--muted);line-height:1.6">1. താഴെ options select ചെയ്യുക<br>2. "Generate & Download" click ചെയ്യുക — <b style="color:var(--text)">index.html</b> download ആകും<br>3. GitHub repo-ൽ ആ file upload ചെയ്യുക<br>4. GitHub Pages link share ചെയ്യുക — participants കാണും</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sections to include -->
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-title">INCLUDE IN PUBLIC PAGE</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;background:var(--dark3);border-radius:10px;padding:12px;border:1px solid rgba(255,255,255,.06)">
+              <input type="checkbox" id="pubHome" checked style="accent-color:var(--accent);width:16px;height:16px">
+              <div><div style="font-size:.85rem;font-weight:600">🏠 Home Page</div><div style="font-size:.7rem;color:var(--muted)">Event info, banner</div></div>
+            </label>
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;background:var(--dark3);border-radius:10px;padding:12px;border:1px solid rgba(255,255,255,.06)">
+              <input type="checkbox" id="pubAnn" checked style="accent-color:var(--accent);width:16px;height:16px">
+              <div><div style="font-size:.85rem;font-weight:600">📢 Announcements</div><div style="font-size:.7rem;color:var(--muted)">Latest news</div></div>
+            </label>
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;background:var(--dark3);border-radius:10px;padding:12px;border:1px solid rgba(255,255,255,.06)">
+              <input type="checkbox" id="pubLive" checked style="accent-color:var(--accent);width:16px;height:16px">
+              <div><div style="font-size:.85rem;font-weight:600">📡 Live Results</div><div style="font-size:.7rem;color:var(--muted)">Team standings</div></div>
+            </label>
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;background:var(--dark3);border-radius:10px;padding:12px;border:1px solid rgba(255,255,255,.06)">
+              <input type="checkbox" id="pubLeader" checked style="accent-color:var(--accent);width:16px;height:16px">
+              <div><div style="font-size:.85rem;font-weight:600">📊 Leaderboard</div><div style="font-size:.7rem;color:var(--muted)">Category-wise</div></div>
+            </label>
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;background:var(--dark3);border-radius:10px;padding:12px;border:1px solid rgba(255,255,255,.06)">
+              <input type="checkbox" id="pubGallery" style="accent-color:var(--accent);width:16px;height:16px">
+              <div><div style="font-size:.85rem;font-weight:600">🖼 Gallery</div><div style="font-size:.7rem;color:var(--muted)">Photos (large file)</div></div>
+            </label>
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;background:var(--dark3);border-radius:10px;padding:12px;border:1px solid rgba(255,255,255,.06)">
+              <input type="checkbox" id="pubScores" style="accent-color:var(--accent);width:16px;height:16px">
+              <div><div style="font-size:.85rem;font-weight:600">🔢 Show Scores</div><div style="font-size:.7rem;color:var(--muted)">Individual points</div></div>
+            </label>
+          </div>
+        </div>
+
+        <!-- GitHub link input -->
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-title">YOUR GITHUB PAGES URL (optional)</div>
+          <input class="form-input" id="pubGithubUrl" placeholder="e.g. https://yourusername.github.io/reponame" style="margin-bottom:0">
+          <div style="font-size:.7rem;color:var(--muted);margin-top:6px">Save ചെയ്‌ത URL Dashboard-ൽ കാണിക്കും</div>
+        </div>
+
+        <!-- Generate button -->
+        <button class="btn btn-primary" style="width:100%;padding:14px;font-size:1rem;background:linear-gradient(135deg,var(--green),#00B860);letter-spacing:2px" onclick="generatePublicHTML()">
+          🚀 GENERATE &amp; DOWNLOAD index.html
+        </button>
+
+        <!-- Instructions -->
+        <div class="card" style="margin-top:14px;background:rgba(108,99,255,.05);border:1px solid rgba(108,99,255,.15)">
+          <div class="card-title">GITHUB UPLOAD STEPS</div>
+          <div style="counter-reset:steps">
+            ${['GitHub.com → Your repo → "Add file" → "Upload files"','Downloaded <b>index.html</b> select ചെയ്ത് drag & drop','Commit changes click ചെയ്യുക','Settings → Pages → Branch: main → Save','Link കിട്ടും: https://username.github.io/reponame'].map((s,i)=>`<div style="display:flex;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:.8rem;color:var(--muted)"><span style="background:var(--accent);color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:.65rem;flex-shrink:0;margin-top:1px">${i+1}</span><span>${s}</span></div>`).join('')}
+          </div>
+        </div>
+      </div>
+
       <!-- ── HISTORY ── -->
       <div class="page" id="page-history">
         <div class="prog-header"><h2>📁 HISTORY</h2><button class="btn btn-red btn-sm" onclick="clearHistory()">🗑 Clear</button></div>
@@ -944,7 +1015,7 @@ function showPage(pg){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const pel=document.getElementById('page-'+pg);
   if(pel) pel.classList.add('active');
-  const T={dashboard:'DASHBOARD',participants:'PARTICIPANTS',programs:'PROGRAMS',teams:'TEAMS',results:'RESULTS',liveresults:'LIVE RESULTS',home:'HOME PAGE',announcements:'ANNOUNCEMENTS',leaderboard:'LEADERBOARD',gallery:'GALLERY',templates:'TEMPLATES',history:'HISTORY',settings:'SETTINGS'};
+  const T={dashboard:'DASHBOARD',participants:'PARTICIPANTS',programs:'PROGRAMS',teams:'TEAMS',results:'RESULTS',liveresults:'LIVE RESULTS',home:'HOME PAGE',announcements:'ANNOUNCEMENTS',leaderboard:'LEADERBOARD',gallery:'GALLERY',publish:'PUBLISH',templates:'TEMPLATES',history:'HISTORY',settings:'SETTINGS'};
   document.getElementById('topbarTitle').textContent=T[pg]||pg.toUpperCase();
   document.querySelectorAll('.nav-item').forEach(n=>{if(n.textContent.toLowerCase().includes(pg.toLowerCase().slice(0,4)))n.classList.add('active')});
   if(pg==='dashboard') renderDash();
@@ -959,6 +1030,7 @@ function showPage(pg){
   if(pg==='leaderboard') renderLeaderboard();
   if(pg==='gallery') renderGallery();
   if(pg==='home') renderHomePage();
+  if(pg==='publish') renderPublishPage();
   if(pg==='settings'){
     const isAdmin=curUser&&(curUser.username==='admin'||curUser.isAdmin===true);
     if(!isAdmin){showToast('Admin access only!',true);showPage('dashboard');return;}
@@ -2173,6 +2245,255 @@ function previewPublicPage(type) {
   <style>*{box-sizing:border-box;margin:0;padding:0}body{background:#0a0a0f;font-family:'DM Sans',sans-serif}</style>
   </head><body>${body}</body></html>`);
   w.document.close();
+}
+
+// ═══ PUBLISH ═══
+function renderPublishPage() {
+  const url = localStorage.getItem('pr_github_url') || '';
+  const el = document.getElementById('pubGithubUrl');
+  if (el) el.value = url;
+}
+
+function generatePublicHTML() {
+  const incHome    = document.getElementById('pubHome')?.checked;
+  const incAnn     = document.getElementById('pubAnn')?.checked;
+  const incLive    = document.getElementById('pubLive')?.checked;
+  const incLeader  = document.getElementById('pubLeader')?.checked;
+  const incGallery = document.getElementById('pubGallery')?.checked;
+  const incScores  = document.getElementById('pubScores')?.checked;
+  const githubUrl  = document.getElementById('pubGithubUrl')?.value.trim();
+  if (githubUrl) localStorage.setItem('pr_github_url', githubUrl);
+
+  const d = homeData;
+  const primary = d.primary || '#6C63FF';
+  const accent2 = d.accent || '#FFD700';
+  const dateStr = d.date ? new Date(d.date).toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'}) : '';
+  const medal = ['🥇','🥈','🥉'];
+  const ANN_IC = {info:'📢',important:'⚠️',result:'🏆',schedule:'📅'};
+  const ANN_COL = {info:'#6C63FF33',important:'#FFA50033',result:'#FFD70033',schedule:'#00E57A33'};
+  const ANN_BOR = {info:'#6C63FF55',important:'#FFA50055',result:'#FFD70055',schedule:'#00E57A55'};
+
+  // Overall standings
+  const standings = teams.map((t,i) => {
+    let total = 0;
+    const catBreak = {};
+    progs.forEach(p => {
+      const cat = cats.find(c => c.id === p.catId);
+      const cn = cat ? cat.name : 'General';
+      getMProg(p.id, t.id).forEach(m => { total += m.score; catBreak[cn] = (catBreak[cn]||0)+m.score; });
+    });
+    return {...t, total, catBreak, ci: i};
+  }).sort((a,b) => b.total - a.total);
+
+  // ── Build sections ──
+  let homeSec = '', annSec = '', liveSec = '', leaderSec = '', gallerySec = '';
+  const navLinks = [];
+
+  if (incHome) {
+    navLinks.push(`<a href="#home" class="nav-link">Home</a>`);
+    homeSec = `<section id="home" class="section">
+      <div class="hero" style="background:linear-gradient(135deg,${primary},${accent2}44)">
+        ${d.org ? `<div class="hero-sub">${esc(d.org)}</div>` : ''}
+        <h1 class="hero-title">${esc(d.title)||'EVENT'}</h1>
+        ${d.tagline ? `<p class="hero-tag">${esc(d.tagline)}</p>` : ''}
+        <div class="hero-meta">
+          ${dateStr ? `<span>📅 ${dateStr}</span>` : ''}
+          ${d.venue ? `<span>📍 ${esc(d.venue)}</span>` : ''}
+        </div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-box"><div class="stat-val" style="color:${accent2}">${teams.length}</div><div class="stat-lbl">TEAMS</div></div>
+        <div class="stat-box"><div class="stat-val" style="color:${accent2}">${progs.length}</div><div class="stat-lbl">PROGRAMS</div></div>
+        <div class="stat-box"><div class="stat-val" style="color:${accent2}">${parts.length}</div><div class="stat-lbl">PARTICIPANTS</div></div>
+        <div class="stat-box"><div class="stat-val" style="color:${accent2}">${cats.length}</div><div class="stat-lbl">CATEGORIES</div></div>
+      </div>
+      ${d.desc ? `<div class="card"><p class="desc-text">${esc(d.desc)}</p></div>` : ''}
+      ${d.contact ? `<div style="text-align:center;padding:10px 0;font-size:.75rem;color:#888;font-family:'Space Mono',monospace">${esc(d.contact)}</div>` : ''}
+    </section>`;
+  }
+
+  if (incAnn && anns.length) {
+    navLinks.push(`<a href="#announcements" class="nav-link">Announcements</a>`);
+    annSec = `<section id="announcements" class="section">
+      <h2 class="sec-title">📢 Announcements</h2>
+      ${anns.map(a => `<div class="ann-card" style="border-color:${ANN_BOR[a.type]||ANN_BOR.info};background:${ANN_COL[a.type]||ANN_COL.info}">
+        <div class="ann-icon">${ANN_IC[a.type]||'📢'}</div>
+        <div class="ann-body">
+          <div class="ann-title">${esc(a.title)}</div>
+          ${a.msg ? `<div class="ann-msg">${esc(a.msg)}</div>` : ''}
+          <div class="ann-time">${new Date(a.time).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})} · ${new Date(a.time).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div>
+        </div>
+      </div>`).join('')}
+    </section>`;
+  }
+
+  if (incLive) {
+    navLinks.push(`<a href="#results" class="nav-link">Live Results</a>`);
+    const hasScores = standings.some(t => t.total > 0);
+    liveSec = `<section id="results" class="section">
+      <h2 class="sec-title">📡 Live Results</h2>
+      ${!hasScores ? `<div class="empty-msg">Results not available yet.</div>` :
+        `<div class="podium-row">
+          ${[1,0,2].filter(i=>standings[i]).map(i => {
+            const t = standings[i]; const isFirst = i===0;
+            return `<div class="podium-card${isFirst?' podium-first':''}">
+              <div class="podium-medal">${medal[i]}</div>
+              <div class="podium-name">${esc(t.name)}</div>
+              <div class="podium-pts" style="color:${accent2}">${t.total} pts</div>
+            </div>`;
+          }).join('')}
+        </div>
+        <div class="lb-wrap">
+          ${standings.map((t,i) => `<div class="lb-row${i===0?' lb-first':''}">
+            <span class="lb-rank">${medal[i]||'#'+(i+1)}</span>
+            <span class="lb-name">${esc(t.name)}</span>
+            ${incScores ? `<span class="lb-pts" style="color:${accent2}">${t.total}</span>` : ''}
+          </div>`).join('')}
+        </div>`}
+    </section>`;
+  }
+
+  if (incLeader && cats.length) {
+    navLinks.push(`<a href="#leaderboard" class="nav-link">Leaderboard</a>`);
+    leaderSec = `<section id="leaderboard" class="section">
+      <h2 class="sec-title">📊 Category Leaderboard</h2>
+      ${cats.map(cat => {
+        const catProgs = progs.filter(p => p.catId === cat.id);
+        if (!catProgs.length) return '';
+        const catStand = standings.map(t => {
+          let s = 0; catProgs.forEach(p => getMProg(p.id,t.id).forEach(m => s+=m.score));
+          return {...t, s};
+        }).filter(t=>t.s>0).sort((a,b)=>b.s-a.s);
+        if (!catStand.length) return '';
+        return `<div class="cat-block">
+          <div class="cat-title">${esc(cat.name)}</div>
+          ${catStand.map((t,i)=>`<div class="lb-row${i===0?' lb-first':''}">
+            <span class="lb-rank">${medal[i]||'#'+(i+1)}</span>
+            <span class="lb-name">${esc(t.name)}</span>
+            ${incScores?`<span class="lb-pts" style="color:${accent2}">${t.s}</span>`:''}
+          </div>`).join('')}
+        </div>`;
+      }).join('')}
+    </section>`;
+  }
+
+  if (incGallery && gallery.length) {
+    navLinks.push(`<a href="#gallery" class="nav-link">Gallery</a>`);
+    gallerySec = `<section id="gallery" class="section">
+      <h2 class="sec-title">🖼 Gallery</h2>
+      <div class="gallery-grid">
+        ${gallery.map(g=>`<div class="gallery-item"><img src="${g.src}" alt="${esc(g.name)}" loading="lazy"></div>`).join('')}
+      </div>
+    </section>`;
+  }
+
+  const pageTitle = d.title || 'ProResult — Event';
+  const lastUpdated = new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) + ' ' + new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${pageTitle}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&family=Space+Mono&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --bg: #0a0a0f; --dark2: #111118; --dark3: #1a1a28; --text: #e8e8f0; --muted: #888; --border: rgba(255,255,255,.08); }
+    body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+
+    /* NAV */
+    .top-nav { position: sticky; top: 0; z-index: 100; background: rgba(10,10,15,.92); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); padding: 0 16px; display: flex; align-items: center; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+    .top-nav::-webkit-scrollbar { display: none; }
+    .nav-brand { font-family: 'Bebas Neue', cursive; font-size: 1.1rem; letter-spacing: 2px; color: ${primary}; padding: 13px 10px 13px 0; margin-right: 8px; white-space: nowrap; border-right: 1px solid var(--border); }
+    .nav-link { color: var(--muted); text-decoration: none; font-size: .78rem; padding: 14px 12px; white-space: nowrap; transition: color .15s; font-weight: 500; }
+    .nav-link:hover { color: var(--text); }
+
+    /* HERO */
+    .hero { padding: 44px 20px 32px; text-align: center; }
+    .hero-sub { font-size: .65rem; letter-spacing: 3px; color: rgba(255,255,255,.6); font-family: 'Space Mono', monospace; margin-bottom: 8px; }
+    .hero-title { font-family: 'Bebas Neue', cursive; font-size: clamp(2rem, 8vw, 3.2rem); letter-spacing: 5px; color: #fff; line-height: 1.05; }
+    .hero-tag { font-size: .9rem; color: rgba(255,255,255,.75); margin-top: 8px; }
+    .hero-meta { display: flex; justify-content: center; gap: 18px; flex-wrap: wrap; margin-top: 14px; }
+    .hero-meta span { font-size: .72rem; color: rgba(255,255,255,.65); font-family: 'Space Mono', monospace; }
+
+    /* STATS */
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 16px; }
+    .stat-box { background: rgba(255,255,255,.05); border-radius: 10px; padding: 12px; text-align: center; }
+    .stat-val { font-family: 'Bebas Neue', cursive; font-size: 1.6rem; line-height: 1; }
+    .stat-lbl { font-size: .58rem; color: var(--muted); font-family: 'Space Mono', monospace; letter-spacing: 1px; margin-top: 3px; }
+
+    /* SECTIONS */
+    .section { max-width: 680px; margin: 0 auto; padding: 20px 16px 8px; }
+    .sec-title { font-family: 'Bebas Neue', cursive; font-size: 1.3rem; letter-spacing: 3px; color: var(--text); margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+    .card { background: var(--dark3); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+    .desc-text { font-size: .85rem; color: #ccc; line-height: 1.7; }
+    .empty-msg { text-align: center; padding: 30px; color: var(--muted); font-size: .85rem; }
+
+    /* ANNOUNCEMENTS */
+    .ann-card { display: flex; gap: 12px; padding: 14px; border: 1px solid; border-radius: 12px; margin-bottom: 10px; }
+    .ann-icon { font-size: 1.4rem; flex-shrink: 0; }
+    .ann-title { font-weight: 700; font-size: .9rem; margin-bottom: 4px; }
+    .ann-msg { font-size: .8rem; color: #bbb; line-height: 1.55; margin-bottom: 5px; }
+    .ann-time { font-size: .65rem; color: var(--muted); font-family: 'Space Mono', monospace; }
+
+    /* PODIUM */
+    .podium-row { display: flex; justify-content: center; align-items: flex-end; gap: 10px; flex-wrap: wrap; padding: 16px 0 20px; }
+    .podium-card { background: var(--dark3); border: 1px solid var(--border); border-radius: 14px; padding: 16px 14px; text-align: center; min-width: 90px; }
+    .podium-first { border-color: rgba(255,215,0,.3); background: rgba(255,215,0,.06); transform: translateY(-8px); }
+    .podium-medal { font-size: 1.8rem; margin-bottom: 6px; }
+    .podium-name { font-family: 'Bebas Neue', cursive; font-size: .85rem; letter-spacing: 1px; color: var(--text); margin-bottom: 4px; word-break: break-word; }
+    .podium-pts { font-family: 'Space Mono', monospace; font-weight: 700; font-size: .85rem; }
+
+    /* LEADERBOARD */
+    .lb-wrap { border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
+    .lb-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--border); background: var(--dark2); }
+    .lb-row:last-child { border-bottom: none; }
+    .lb-first { background: rgba(255,215,0,.05); }
+    .lb-rank { font-size: .95rem; min-width: 28px; }
+    .lb-name { flex: 1; font-size: .88rem; font-weight: 600; }
+    .lb-pts { font-family: 'Space Mono', monospace; font-weight: 700; font-size: .9rem; }
+
+    /* CATEGORY */
+    .cat-block { margin-bottom: 20px; }
+    .cat-title { font-family: 'Bebas Neue', cursive; font-size: .9rem; letter-spacing: 2px; color: var(--muted); margin-bottom: 8px; padding: 4px 0; border-bottom: 1px solid var(--border); }
+
+    /* GALLERY */
+    .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px,1fr)); gap: 8px; }
+    .gallery-item { border-radius: 10px; overflow: hidden; aspect-ratio: 1; }
+    .gallery-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    /* FOOTER */
+    .page-footer { text-align: center; padding: 28px 16px; margin-top: 20px; border-top: 1px solid var(--border); font-size: .65rem; color: var(--muted); font-family: 'Space Mono', monospace; letter-spacing: 1px; }
+
+    @media (max-width: 480px) { .stats-row { grid-template-columns: repeat(2,1fr); } .podium-card { min-width: 80px; padding: 12px 10px; } }
+  </style>
+</head>
+<body>
+  <nav class="top-nav">
+    <div class="nav-brand">${esc(d.title)||'ProResult'}</div>
+    ${navLinks.join('')}
+  </nav>
+
+  ${homeSec}
+  ${annSec}
+  ${liveSec}
+  ${leaderSec}
+  ${gallerySec}
+
+  <footer class="page-footer">
+    POWERED BY PRORESULT &nbsp;·&nbsp; DEZIGN HUB 2026 &nbsp;·&nbsp; Last updated: ${lastUpdated}
+  </footer>
+</body>
+</html>`;
+
+  // Download
+  const blob = new Blob([html], {type:'text/html'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'index.html';
+  a.click();
+  showToast('index.html downloaded! Upload to GitHub 🚀');
 }
 
 // ═══ SETTINGS ═══

@@ -810,6 +810,7 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
               <button class="btn btn-red btn-sm" id="qrStopBtn" onclick="stopQRScan()" style="display:none">Stop</button>
             </div>
             <div id="qrScanResult" style="margin-top:14px"></div>
+            <div style="margin-top:10px;font-size:.68rem;color:var(--muted)">📌 Camera പ്രവർത്തിക്കാൻ site HTTPS-ൽ ആയിരിക്കണം (GitHub Pages ✓), ഒപ്പം browser-ന് camera permission നൽകണം.</div>
           </div>
         </div>
 
@@ -2736,25 +2737,54 @@ function markAttendance(partId, present) {
 }
 
 async function startQRScan() {
-  // Load jsQR library dynamically if not present
-  if (typeof jsQR === 'undefined') {
-    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.js');
-  }
   const video = document.getElementById('qrVideo');
   const placeholder = document.getElementById('qrScannerPlaceholder');
+  const btn = document.getElementById('qrScanBtn');
+
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    placeholder.style.display='block';
+    placeholder.textContent = 'ഈ browser camera support ചെയ്യുന്നില്ല. Manual tab ഉപയോഗിക്കുക.';
+    showToast('Camera not supported on this browser', true);
+    return;
+  }
+
+  btn.textContent = 'Loading...';
+  btn.disabled = true;
+
+  // Load jsQR library dynamically if not present (try 2 CDNs)
+  if (typeof jsQR === 'undefined') {
+    try {
+      await loadScript('https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js');
+    } catch (e1) {
+      try {
+        await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.js');
+      } catch (e2) {
+        btn.textContent = 'Start Camera';
+        btn.disabled = false;
+        placeholder.style.display='block';
+        placeholder.textContent = 'QR library load ആയില്ല. Internet check ചെയ്യുക, Manual tab ഉപയോഗിക്കാം.';
+        showToast('Could not load scanner library — check internet', true);
+        return;
+      }
+    }
+  }
+
+  btn.textContent = 'Start Camera';
+  btn.disabled = false;
+
   try {
     qrScanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
     video.srcObject = qrScanStream;
     video.style.display = 'block';
     placeholder.style.display = 'none';
-    video.play();
-    document.getElementById('qrScanBtn').style.display = 'none';
+    await video.play();
+    btn.style.display = 'none';
     document.getElementById('qrStopBtn').style.display = 'inline-flex';
 
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     qrScanInterval = setInterval(() => {
-      if (video.readyState !== video.HAVE_ENOUGH_DATA) return;
+      if (!video.videoWidth || video.readyState !== video.HAVE_ENOUGH_DATA) return;
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -2765,8 +2795,17 @@ async function startQRScan() {
       }
     }, 400);
   } catch (e) {
-    placeholder.textContent = 'Camera access denied or unavailable';
-    showToast('Camera ലഭ്യമല്ല. Manual tab ഉപയോഗിക്കുക.', true);
+    placeholder.style.display = 'block';
+    if (e.name === 'NotAllowedError') {
+      placeholder.textContent = 'Camera permission denied. Browser settings-ൽ allow ചെയ്യുക.';
+      showToast('Camera permission denied — check browser settings', true);
+    } else if (e.name === 'NotFoundError') {
+      placeholder.textContent = 'Camera കണ്ടെത്താനായില്ല.';
+      showToast('No camera found on this device', true);
+    } else {
+      placeholder.textContent = 'Camera error: ' + e.message;
+      showToast('Camera error — try Manual tab', true);
+    }
   }
 }
 
@@ -2804,8 +2843,11 @@ function handleQRScanResult(data) {
 function loadScript(src) {
   return new Promise((resolve, reject) => {
     const s = document.createElement('script');
-    s.src = src; s.onload = resolve; s.onerror = reject;
+    s.src = src;
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error('Failed to load ' + src));
     document.head.appendChild(s);
+    setTimeout(() => reject(new Error('Timeout loading ' + src)), 8000);
   });
 }
 

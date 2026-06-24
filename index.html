@@ -199,6 +199,28 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
 }
 .mob-menu-btn{display:none;background:none;border:none;color:var(--text);font-size:1.3rem;cursor:pointer}
 </style>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, doc, getDoc, setDoc, onSnapshot, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBFSOF-Vz7syihGrDUdbeu_z5fTHOskUvw",
+    authDomain: "proresult-f1b1e.firebaseapp.com",
+    projectId: "proresult-f1b1e",
+    storageBucket: "proresult-f1b1e.firebasestorage.app",
+    messagingSenderId: "691537026720",
+    appId: "1:691537026720:web:0ab940fbfd916c1f3973c5",
+    measurementId: "G-LBS4FJR7NN"
+  };
+
+  const fbApp = initializeApp(firebaseConfig);
+  const db = getFirestore(fbApp);
+  try { enableIndexedDbPersistence(db); } catch(e) {}
+
+  // Expose to global scope for use in main script
+  window.__fb = { db, doc, getDoc, setDoc, onSnapshot };
+  window.__fbReady = true;
+</script>
 </head>
 <body>
 
@@ -1008,8 +1030,80 @@ const TC=['#6C63FF','#FF4D6D','#00E57A','#FFD700','#00B4D8','#FF9F1C','#A8DADC',
 const TE=['🔵','🔴','🟢','🟡','🩵','🟠','🩶','❤️','🟣','🩷'];
 const DN=['Team 1','Team 2','Team 3','Team 4','Team 5','Team 6','Team 7','Team 8','Team 9','Team 10'];
 
-function ld(k,d){try{return JSON.parse(localStorage.getItem(k))||d}catch{return d}}
-function sd(k,v){localStorage.setItem(k,JSON.stringify(v))}
+// ═══ FIREBASE SYNC LAYER ═══
+const FB_DOC_ID = 'main'; // single shared event document
+let fbData = {}; // local cache mirroring Firestore doc fields
+let fbReady = false;
+let fbSuppressEcho = false;
+
+function ld(k,d){
+  try{
+    if (fbData.hasOwnProperty(k)) return fbData[k];
+    return JSON.parse(localStorage.getItem(k))||d;
+  }catch{return d}
+}
+function sd(k,v){
+  localStorage.setItem(k,JSON.stringify(v));
+  fbData[k] = v;
+  if (k === 'pr_gallery') return; // gallery photos stay local-only (Firestore 1MB doc limit)
+  pushToFirestore(k, v);
+}
+function pushToFirestore(key, value) {
+  if (!window.__fbReady || !window.__fb) return;
+  const { db, doc, setDoc } = window.__fb;
+  fbSuppressEcho = true;
+  setDoc(doc(db, 'proresult', FB_DOC_ID), { [key]: JSON.stringify(value) }, { merge: true })
+    .catch(err => {
+      console.warn('Firestore write failed:', err.message);
+      if (typeof showToast === 'function') {
+        if (err.code === 'resource-exhausted' || /exceeds the maximum/i.test(err.message)) {
+          showToast('Data too large to sync online — saved locally only', true);
+        } else {
+          showToast('Online sync failed (saved locally) — check internet', true);
+        }
+      }
+    })
+    .finally(() => { setTimeout(()=>{fbSuppressEcho=false;}, 300); });
+}
+
+let fbListenerActive = false;
+async function initFirebaseSync(onUpdate) {
+  if (!window.__fbReady || !window.__fb) { console.warn('Firebase not ready'); return; }
+  const { db, doc, getDoc, onSnapshot } = window.__fb;
+  const ref = doc(db, 'proresult', FB_DOC_ID);
+  try {
+    const snap = await getDoc(ref);
+    if (snap.exists()) {
+      const remote = snap.data();
+      Object.keys(remote).forEach(k => {
+        try { fbData[k] = JSON.parse(remote[k]); localStorage.setItem(k, remote[k]); } catch(e){}
+      });
+    }
+    fbReady = true;
+    if (fbListenerActive) return; // listener already attached
+    fbListenerActive = true;
+    // Live listener — auto-sync changes from other devices
+    onSnapshot(ref, (snap) => {
+      if (fbSuppressEcho) return;
+      if (!snap.exists()) return;
+      const remote = snap.data();
+      let changed = false;
+      Object.keys(remote).forEach(k => {
+        try {
+          const parsed = JSON.parse(remote[k]);
+          if (JSON.stringify(fbData[k]) !== remote[k]) {
+            fbData[k] = parsed;
+            localStorage.setItem(k, remote[k]);
+            changed = true;
+          }
+        } catch(e){}
+      });
+      if (changed && typeof onUpdate === 'function') onUpdate();
+    });
+  } catch (err) {
+    console.warn('Firebase init failed, using localStorage only:', err.message);
+  }
+}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 
 let users=ld('pr_users',[{username:'admin',password:'dh@2026',isAdmin:true}]);
@@ -1024,8 +1118,30 @@ let editProgId=null;
 let scorePid=null;
 let filterCat='all';
 
+// Try to sync users/credentials from Firestore as soon as page loads,
+// so login works with the latest password from any device.
+(async function earlySyncForLogin(){
+  // wait up to 3s for the firebase module script to set window.__fbReady
+  let waited = 0;
+  while (!window.__fbReady && waited < 3000) {
+    await new Promise(r=>setTimeout(r,100));
+    waited += 100;
+  }
+  try {
+    await initFirebaseSync(null);
+    reloadAllData();
+  } catch(e) { /* offline fallback: localStorage values already loaded */ }
+})();
+
 // ═══ AUTH ═══
-function doLogin(){
+async function doLogin(){
+  const btn = document.querySelector('.login-btn');
+  const origText = btn.textContent;
+  btn.textContent = 'Checking...'; btn.disabled = true;
+  // quick re-sync in case earlier background sync hadn't completed
+  try { await initFirebaseSync(refreshAllViews); reloadAllData(); } catch(e){}
+  btn.textContent = origText; btn.disabled = false;
+
   const u=document.getElementById('liUser').value.trim();
   const p=document.getElementById('liPass').value;
   const f=users.find(x=>x.username===u&&x.password===p);
@@ -1042,6 +1158,28 @@ function doLogin(){
   document.getElementById('greetName').textContent=u.toUpperCase();
   updateClock();setInterval(updateClock,1000);
   showPage('dashboard');
+}
+function reloadAllData(){
+  users=ld('pr_users',users);
+  teams=ld('pr_teams',teams);
+  cats=ld('pr_cats',cats);
+  progs=ld('pr_progs',progs);
+  parts=ld('pr_parts',parts);
+  hist=ld('pr_hist',hist);
+  if (typeof anns !== 'undefined') anns = ld('pr_anns', anns);
+  if (typeof liveSettings !== 'undefined') liveSettings = ld('pr_live', liveSettings);
+  if (typeof gallery !== 'undefined') gallery = ld('pr_gallery', gallery);
+  if (typeof homeData !== 'undefined') homeData = ld('pr_home', homeData);
+  if (typeof attendance !== 'undefined') attendance = ld('pr_attendance', attendance);
+}
+function refreshAllViews(){
+  reloadAllData();
+  const pg = document.body.getAttribute('data-current-page');
+  if (pg && typeof showPage === 'function') {
+    try { showPage(pg); } catch(e){}
+  } else if (typeof renderDash === 'function') {
+    try{renderDash();}catch(e){}
+  }
 }
 document.getElementById('liPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
 
@@ -1063,8 +1201,8 @@ function emergencyReset(){
   let updated;
   if(hasAdmin){updated=existing.map(u=>u.username==='admin'?{...u,password:'dh@2026',isAdmin:true}:u);}
   else{updated=[{username:'admin',password:'dh@2026',isAdmin:true},...existing];}
-  localStorage.setItem('pr_users',JSON.stringify(updated));
   users=updated;
+  sd('pr_users',updated);
   document.getElementById('resetBox').style.display='none';
   document.getElementById('liUser').value='admin';
   document.getElementById('liPass').value='';
@@ -1105,6 +1243,7 @@ function updateClock(){
 
 // ═══ NAV ═══
 function showPage(pg){
+  document.body.setAttribute('data-current-page', pg);
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const pel=document.getElementById('page-'+pg);

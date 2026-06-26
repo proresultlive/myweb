@@ -296,6 +296,7 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
       <div class="nav-item" onclick="showPage('qrcards')"><span class="ni">📱</span>QR Cards</div>
       <div class="nav-item" onclick="showPage('attendance')"><span class="ni">✅</span>Attendance</div>
       <div class="nav-item" onclick="showPage('awards')"><span class="ni">🏅</span>Awards</div>
+      <div class="nav-item" onclick="showPage('analytics')"><span class="ni">📈</span>Analytics</div>
       <div class="nav-section">SETTINGS</div>
       <div class="nav-item" id="navSettings" onclick="showPage('settings')"><span class="ni">⚙️</span>Settings</div>
     </nav>
@@ -760,6 +761,10 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
               <div><div style="font-size:.85rem;font-weight:600">🧑‍🤝‍🧑 Program Results</div><div style="font-size:.7rem;color:var(--muted)">Participant name, chest no, category</div></div>
             </label>
             <label style="display:flex;align-items:center;gap:10px;cursor:pointer;background:var(--dark3);border-radius:10px;padding:12px;border:1px solid rgba(255,255,255,.06)">
+              <input type="checkbox" id="pubSearch" checked style="accent-color:var(--accent);width:16px;height:16px">
+              <div><div style="font-size:.85rem;font-weight:600">🔍 Chest No. Search</div><div style="font-size:.7rem;color:var(--muted)">Individual results lookup</div></div>
+            </label>
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;background:var(--dark3);border-radius:10px;padding:12px;border:1px solid rgba(255,255,255,.06)">
               <input type="checkbox" id="pubGallery" style="accent-color:var(--accent);width:16px;height:16px">
               <div><div style="font-size:.85rem;font-weight:600">🖼 Gallery</div><div style="font-size:.7rem;color:var(--muted)">Photos (large file)</div></div>
             </label>
@@ -878,6 +883,15 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
         <div id="awardsContent"></div>
       </div>
 
+      <!-- ── ANALYTICS ── -->
+      <div class="page" id="page-analytics">
+        <div class="prog-header">
+          <h2>📈 ANALYTICS</h2>
+          <button class="btn btn-primary btn-sm" onclick="renderAnalytics()">🔄 Refresh</button>
+        </div>
+        <div id="analyticsContent"></div>
+      </div>
+
       <!-- ── HISTORY ── -->
       <div class="page" id="page-history">
         <div class="prog-header"><h2>📁 HISTORY</h2><button class="btn btn-red btn-sm" onclick="clearHistory()">🗑 Clear</button></div>
@@ -988,6 +1002,18 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
     <div class="form-field"><label>CATEGORY</label><select class="form-input" id="progCat"></select></div>
     <div class="form-field"><label>MAX SCORE (per participant)</label><input class="form-input" type="number" id="progMax" value="100" min="1" placeholder="100"></div>
     <div class="form-field"><label>DESCRIPTION (optional)</label><input class="form-input" id="progDesc" placeholder="Brief description..."></div>
+    <div class="form-field"><label>VENUE / STAGE (optional)</label>
+      <select class="form-input" id="progVenue">
+        <option value="">— Select Venue —</option>
+        <option value="Main Stage">Main Stage</option>
+        <option value="Auditorium">Auditorium</option>
+        <option value="Hall A">Hall A</option>
+        <option value="Hall B">Hall B</option>
+        <option value="Outdoor Ground">Outdoor Ground</option>
+        <option value="Classroom 1">Classroom 1</option>
+        <option value="Classroom 2">Classroom 2</option>
+      </select>
+    </div>
     <div class="modal-actions">
       <button class="btn btn-outline" onclick="closeModal('progModal')">Cancel</button>
       <button class="btn btn-primary" onclick="saveProgram()">Save</button>
@@ -1248,9 +1274,10 @@ function showPage(pg){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const pel=document.getElementById('page-'+pg);
   if(pel) pel.classList.add('active');
-  const T={dashboard:'DASHBOARD',participants:'PARTICIPANTS',programs:'PROGRAMS',teams:'TEAMS',results:'RESULTS',liveresults:'LIVE RESULTS',home:'HOME PAGE',announcements:'ANNOUNCEMENTS',leaderboard:'LEADERBOARD',gallery:'GALLERY',publish:'PUBLISH',templates:'TEMPLATES',qrcards:'QR CARDS',attendance:'ATTENDANCE',awards:'AWARDS',history:'HISTORY',settings:'SETTINGS'};
+  const T={dashboard:'DASHBOARD',participants:'PARTICIPANTS',programs:'PROGRAMS',teams:'TEAMS',results:'RESULTS',liveresults:'LIVE RESULTS',home:'HOME PAGE',announcements:'ANNOUNCEMENTS',leaderboard:'LEADERBOARD',gallery:'GALLERY',publish:'PUBLISH',templates:'TEMPLATES',qrcards:'QR CARDS',attendance:'ATTENDANCE',awards:'AWARDS',analytics:'ANALYTICS',history:'HISTORY',settings:'SETTINGS'};
   document.getElementById('topbarTitle').textContent=T[pg]||pg.toUpperCase();
   document.querySelectorAll('.nav-item').forEach(n=>{if(n.textContent.toLowerCase().includes(pg.toLowerCase().slice(0,4)))n.classList.add('active')});
+  document.getElementById('sidebar')?.classList.remove('open');
   if(pg==='dashboard') renderDash();
   if(pg==='participants') renderParticipants();
   if(pg==='programs') renderProgs();
@@ -1267,6 +1294,7 @@ function showPage(pg){
   if(pg==='qrcards') renderQRCards();
   if(pg==='attendance'){switchAttTab('scan');}
   if(pg==='awards') calcAwards();
+  if(pg==='analytics') renderAnalytics();
   if(pg==='settings'){
     const isAdmin=curUser&&(curUser.username==='admin'||curUser.isAdmin===true);
     if(!isAdmin){showToast('Admin access only!',true);showPage('dashboard');return;}
@@ -1500,19 +1528,48 @@ function renderProgs(){
   grid.innerHTML=list.map(p=>{
     const cat=cats.find(c=>c.id===p.catId);const ci=cat?cat.color:0;
     const totalScored=teams.filter(t=>getMProg(p.id,t.id).length>0).length;
+
+    // Collect all participant scores for this program (auto-rank with tie handling)
+    let entries=[];
+    teams.forEach(t=>{
+      getMProg(p.id,t.id).forEach(m=>{
+        const part=parts.find(x=>x.name===m.name);
+        entries.push({name:m.name,chest:part?part.chest:'',teamName:t.name,score:m.score});
+      });
+    });
+    entries.sort((a,b)=>b.score-a.score);
+    // assign ranks with tie support (same score = same rank)
+    let rank=0,lastScore=null;
+    entries.forEach((e,i)=>{
+      if(e.score!==lastScore){rank=i+1;lastScore=e.score;}
+      e.rank=rank;
+    });
+    const medal={1:'🥇',2:'🥈',3:'🥉'};
+
     return `<div class="prog-card">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
         <div style="font-family:'Montserrat','Manjari',sans-serif;font-size:1.05rem;letter-spacing:1px;flex:1">${esc(p.name)}</div>
         ${cat?`<span class="tc${ci} bg${ci}" style="font-size:.62rem;font-family:'Inter','Manjari',sans-serif;padding:2px 8px;border-radius:8px;flex-shrink:0;margin-left:6px">${cat.emoji} ${esc(cat.name)}</span>`:''}
       </div>
       ${p.desc?`<div style="color:var(--muted);font-size:.76rem;margin-bottom:7px">${esc(p.desc)}</div>`:''}
-      <div style="color:var(--muted);font-size:.75rem;margin-bottom:9px;display:flex;gap:10px">
+      <div style="color:var(--muted);font-size:.75rem;margin-bottom:9px;display:flex;gap:10px;flex-wrap:wrap">
         <span>Max: ${p.maxScore} pts</span><span>${totalScored}/10 teams scored</span>
+        ${p.venue?`<span style="color:var(--accent)">📍 ${esc(p.venue)}</span>`:''}
       </div>
       <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px">
         ${teams.map((t,ti)=>{const ms=getMProg(p.id,t.id);const tot=ms.reduce((s,m)=>s+m.score,0);
           return `<span class="tc${ti} bg${ti}" style="font-size:.65rem;font-family:'Inter','Manjari',sans-serif;padding:2px 7px;border-radius:6px">${esc(t.name.split(' ').pop()||t.name)}: ${tot}</span>`}).join('')}
       </div>
+      ${entries.length?`<div style="background:var(--dark4);border-radius:10px;padding:8px 10px;margin-bottom:10px">
+        <div style="font-size:.62rem;color:var(--muted);font-family:'Inter','Manjari',sans-serif;letter-spacing:1px;margin-bottom:5px">AUTO RANKING</div>
+        ${entries.slice(0,5).map(e=>`<div style="display:flex;align-items:center;gap:8px;padding:3px 0;font-size:.78rem">
+          <span style="min-width:22px">${medal[e.rank]||('#'+e.rank)}</span>
+          <span style="flex:1;font-weight:600">${esc(e.name)}</span>
+          <span style="color:var(--muted);font-size:.68rem">${esc(e.teamName)}</span>
+          <span style="font-family:'Inter','Manjari',sans-serif;color:var(--gold);font-weight:700">${e.score}</span>
+        </div>`).join('')}
+        ${entries.length>5?`<div style="font-size:.68rem;color:var(--muted);margin-top:3px">+${entries.length-5} more</div>`:''}
+      </div>`:''}
       <div style="display:flex;gap:6px">
         <button class="btn btn-primary btn-xs" onclick="openScoreModal(${p.id})">📝 Scores</button>
         <button class="btn btn-outline btn-xs" onclick="openProgModal(${p.id})">✏️</button>
@@ -1529,6 +1586,7 @@ function openProgModal(pid){
   document.getElementById('progName').value=p?p.name:'';
   document.getElementById('progMax').value=p?p.maxScore:100;
   document.getElementById('progDesc').value=p?p.desc:'';
+  document.getElementById('progVenue').value=p?(p.venue||''):'';
   const sel=document.getElementById('progCat');
   sel.innerHTML=cats.length?cats.map(c=>`<option value="${c.id}" ${p&&p.catId===c.id?'selected':''}>${c.emoji} ${esc(c.name)}</option>`).join(''):`<option value="">Add a category first</option>`;
   openModal('progModal');
@@ -1539,8 +1597,9 @@ function saveProgram(){
   const catId=parseInt(document.getElementById('progCat').value);
   const maxScore=parseInt(document.getElementById('progMax').value)||100;
   const desc=document.getElementById('progDesc').value.trim();
-  if(editProgId){progs=progs.map(p=>p.id===editProgId?{...p,name,catId,maxScore,desc}:p);showToast('Updated ✓')}
-  else{progs.push({id:Date.now(),name,catId,maxScore,desc});showToast('Program added ✓')}
+  const venue=document.getElementById('progVenue').value;
+  if(editProgId){progs=progs.map(p=>p.id===editProgId?{...p,name,catId,maxScore,desc,venue}:p);showToast('Updated ✓')}
+  else{progs.push({id:Date.now(),name,catId,maxScore,desc,venue});showToast('Program added ✓')}
   sd('pr_progs',progs);closeModal('progModal');renderProgs();editProgId=null;
 }
 function delProg(pid){
@@ -2498,6 +2557,7 @@ function generatePublicHTML() {
   const incGallery = document.getElementById('pubGallery')?.checked;
   const incScores  = document.getElementById('pubScores')?.checked;
   const incProgResults = document.getElementById('pubProgResults')?.checked;
+  const incSearch = document.getElementById('pubSearch')?.checked;
   const githubUrl  = document.getElementById('pubGithubUrl')?.value.trim();
   if (githubUrl) localStorage.setItem('pr_github_url', githubUrl);
 
@@ -2650,6 +2710,47 @@ function generatePublicHTML() {
     </section>`;
   }
 
+  let searchSec = '';
+  let searchDataScript = '';
+  if (incSearch && parts.length) {
+    navLinks.unshift(`<a href="#search" class="nav-link" style="color:${accent2}">🔍 Find My Result</a>`);
+    // Build a lookup: chest number -> { name, category, group, results: [{program, score, rank, team}] }
+    const lookup = {};
+    parts.forEach(p => {
+      const cat = cats.find(c => c.id === p.catId);
+      lookup[p.chest] = { name: p.name, category: cat ? cat.name : '', group: p.group || '', results: [] };
+    });
+    progs.forEach(prog => {
+      let entries = [];
+      teams.forEach(t => {
+        getMProg(prog.id, t.id).forEach(m => {
+          const part = parts.find(x => x.name === m.name);
+          entries.push({ chest: part ? part.chest : null, score: m.score, team: t.name });
+        });
+      });
+      entries.sort((a,b) => b.score - a.score);
+      let rank = 0, lastScore = null;
+      entries.forEach((e, i) => {
+        if (e.score !== lastScore) { rank = i + 1; lastScore = e.score; }
+        e.rank = rank;
+      });
+      entries.forEach(e => {
+        if (e.chest && lookup[e.chest]) {
+          lookup[e.chest].results.push({ program: prog.name, score: e.score, rank: e.rank, team: e.team });
+        }
+      });
+    });
+    searchDataScript = `<script>window.__prSearchData = ${JSON.stringify(lookup)};<\/script>`;
+    searchSec = `<section id="search" class="section">
+      <h2 class="sec-title">🔍 Find My Result</h2>
+      <div class="search-box-wrap">
+        <input type="text" id="chestSearchInput" class="search-input" placeholder="Enter Chest Number (e.g. 101)" inputmode="numeric">
+        <button class="search-btn" onclick="searchByChest()" style="background:${accent2}">Search</button>
+      </div>
+      <div id="searchResultBox"></div>
+    </section>`;
+  }
+
   if (incGallery && gallery.length) {
     navLinks.push(`<a href="#gallery" class="nav-link">Gallery</a>`);
     gallerySec = `<section id="gallery" class="section">
@@ -2736,6 +2837,27 @@ function generatePublicHTML() {
     .gallery-item { border-radius: 10px; overflow: hidden; aspect-ratio: 1; }
     .gallery-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
+    /* NOTIFICATION BANNER */
+    .notif-banner { background: linear-gradient(90deg, rgba(255,215,0,.12), rgba(255,215,0,.04)); border-bottom: 1px solid rgba(255,215,0,.2); padding: 8px 16px; display: flex; align-items: center; gap: 10px; overflow: hidden; }
+    .notif-icon { font-size: 1rem; flex-shrink: 0; }
+    .notif-text { font-size: .78rem; color: #ffe87a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: 'Inter', 'Manjari', sans-serif; }
+
+    /* SEARCH */
+    .search-box-wrap { display: flex; gap: 8px; margin-bottom: 16px; }
+    .search-input { flex: 1; background: var(--dark3); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; color: var(--text); font-family: 'Inter', 'Manjari', sans-serif; font-size: .95rem; outline: none; }
+    .search-input:focus { border-color: rgba(255,255,255,.25); }
+    .search-btn { padding: 12px 20px; border: none; border-radius: 10px; color: #0a0a0f; font-weight: 700; font-size: .85rem; cursor: pointer; font-family: 'Poppins', sans-serif; }
+    .sr-card { background: var(--dark3); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin-top: 4px; }
+    .sr-name { font-family: 'Montserrat', 'Manjari', sans-serif; font-size: 1.3rem; letter-spacing: 1px; color: var(--text); }
+    .sr-meta { font-size: .78rem; color: var(--muted); margin-top: 4px; }
+    .sr-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+    .sr-row:last-child { border-bottom: none; }
+    .sr-prog { flex: 1; font-size: .85rem; font-weight: 600; }
+    .sr-team { font-size: .68rem; color: var(--muted); }
+    .sr-rank { font-size: 1rem; min-width: 26px; text-align: center; }
+    .sr-score { font-family: 'Inter', 'Manjari', sans-serif; font-weight: 700; font-size: .9rem; }
+    .sr-empty { text-align: center; padding: 24px; color: var(--muted); font-size: .85rem; }
+
     /* FOOTER */
     .page-footer { text-align: center; padding: 28px 16px; margin-top: 20px; border-top: 1px solid var(--border); font-size: .65rem; color: var(--muted); font-family: 'Inter', 'Manjari', sans-serif; letter-spacing: 1px; }
 
@@ -2743,11 +2865,15 @@ function generatePublicHTML() {
   </style>
 </head>
 <body>
+  ${searchDataScript}
   <nav class="top-nav">
     <div class="nav-brand">${esc(d.title)||'ProResult'}</div>
     ${navLinks.join('')}
   </nav>
 
+  ${incAnn && anns.length ? `<div class="notif-banner"><span class="notif-icon">${ANN_IC[anns[0].type]||'📢'}</span><span class="notif-text">${esc(anns[0].title)}${anns[0].msg ? ' — ' + esc(anns[0].msg) : ''}</span></div>` : ''}
+
+  ${searchSec}
   ${homeSec}
   ${annSec}
   ${liveSec}
@@ -2758,6 +2884,26 @@ function generatePublicHTML() {
   <footer class="page-footer">
     POWERED BY PRORESULT &nbsp;·&nbsp; DEZIGN HUB 2026 &nbsp;·&nbsp; Last updated: ${lastUpdated}
   </footer>
+  <script>
+    function searchByChest() {
+      const input = document.getElementById('chestSearchInput');
+      const box = document.getElementById('searchResultBox');
+      const chest = input.value.trim();
+      if (!chest) { box.innerHTML = ''; return; }
+      const data = window.__prSearchData || {};
+      const rec = data[chest];
+      const medal = {1:'🥇',2:'🥈',3:'🥉'};
+      if (!rec) {
+        box.innerHTML = '<div class="sr-card"><div class="sr-empty">No participant found with chest number "' + chest.replace(/[<>]/g,'') + '". Please check and try again.</div></div>';
+        return;
+      }
+      const rowsHtml = rec.results.length
+        ? rec.results.map(r => '<div class="sr-row"><span class="sr-rank">' + (medal[r.rank] || ('#'+r.rank)) + '</span><div class="sr-prog">' + r.program + '<div class="sr-team">' + r.team + '</div></div><span class="sr-score">' + r.score + ' pts</span></div>').join('')
+        : '<div class="sr-empty">No results recorded yet for this participant.</div>';
+      box.innerHTML = '<div class="sr-card"><div class="sr-name">' + rec.name + '</div><div class="sr-meta">Chest No: ' + chest + (rec.category ? ' · ' + rec.category : '') + (rec.group ? ' · Group ' + rec.group : '') + '</div><div style="margin-top:12px">' + rowsHtml + '</div></div>';
+    }
+    document.getElementById('chestSearchInput')?.addEventListener('keydown', function(e){ if (e.key === 'Enter') searchByChest(); });
+  <\/script>
 </body>
 </html>`;
 
@@ -3158,6 +3304,95 @@ function downloadAwardsCertificate(type) {
   </div>
   <script>window.onload=()=>setTimeout(()=>window.print(),700)<\\/script></body></html>`);
   w.document.close(); w.focus();
+}
+
+// ═══ ANALYTICS ═══
+function renderAnalytics() {
+  const el = document.getElementById('analyticsContent');
+  if (!el) return;
+
+  const teamTotals = teams.map((t,i) => {
+    let total = 0;
+    progs.forEach(p => getMProg(p.id, t.id).forEach(m => total += m.score));
+    return { ...t, total, ci: i };
+  }).sort((a,b) => b.total - a.total);
+
+  const maxTeamScore = Math.max(1, ...teamTotals.map(t => t.total));
+  const mostActive = [...teams].map((t,i) => {
+    let cnt = 0;
+    progs.forEach(p => cnt += getMProg(p.id, t.id).length);
+    return { ...t, cnt, ci: i };
+  }).sort((a,b) => b.cnt - a.cnt)[0];
+
+  // Category-wise stats: total points awarded per category, programs count, participants count
+  const catStats = cats.map(cat => {
+    const catProgs = progs.filter(p => p.catId === cat.id);
+    let totalPts = 0, partCount = new Set();
+    catProgs.forEach(p => {
+      teams.forEach(t => {
+        getMProg(p.id, t.id).forEach(m => { totalPts += m.score; partCount.add(m.name); });
+      });
+    });
+    return { name: cat.name, progCount: catProgs.length, totalPts, partCount: partCount.size };
+  });
+  const maxCatPts = Math.max(1, ...catStats.map(c => c.totalPts));
+
+  el.innerHTML = `
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-title">🏆 TEAM PERFORMANCE</div>
+      ${teamTotals.length ? teamTotals.map(t => `
+        <div style="margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:4px">
+            <span style="font-weight:600;display:flex;align-items:center;gap:6px"><span class="bg${t.ci%10}" style="width:9px;height:9px;border-radius:3px;display:inline-block"></span>${esc(t.name)}</span>
+            <span style="font-family:'Inter','Manjari',sans-serif;color:var(--gold);font-weight:700">${t.total}</span>
+          </div>
+          <div style="background:rgba(255,255,255,.06);border-radius:6px;height:10px;overflow:hidden">
+            <div style="height:100%;border-radius:6px;background:linear-gradient(90deg,var(--accent),var(--gold));width:${(t.total/maxTeamScore*100)}%;transition:width .3s"></div>
+          </div>
+        </div>`).join('') : `<div style="color:var(--muted);text-align:center;padding:20px;font-size:.85rem">No score data yet.</div>`}
+    </div>
+
+    ${mostActive && mostActive.cnt > 0 ? `<div class="card" style="margin-bottom:14px;border:1px solid rgba(0,229,122,.2);background:rgba(0,229,122,.04)">
+      <div style="display:flex;align-items:center;gap:14px">
+        <div style="font-size:2rem">⚡</div>
+        <div>
+          <div style="font-family:'Inter','Manjari',sans-serif;font-size:.65rem;letter-spacing:1px;color:var(--green)">MOST ACTIVE TEAM</div>
+          <div style="font-family:'Montserrat','Manjari',sans-serif;font-size:1.2rem;margin-top:2px">${esc(mostActive.name)}</div>
+          <div style="font-size:.75rem;color:var(--muted);margin-top:2px">${mostActive.cnt} participant entries across all programs</div>
+        </div>
+      </div>
+    </div>` : ''}
+
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-title">📊 CATEGORY-WISE STATISTICS</div>
+      ${catStats.length ? catStats.map(c => `
+        <div style="margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.05)">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+            <span style="font-weight:600;font-size:.88rem">${esc(c.name)}</span>
+            <span style="font-family:'Inter','Manjari',sans-serif;font-size:.7rem;color:var(--muted)">${c.progCount} program${c.progCount!==1?'s':''} · ${c.partCount} participant${c.partCount!==1?'s':''}</span>
+          </div>
+          <div style="background:rgba(255,255,255,.06);border-radius:6px;height:10px;overflow:hidden;margin-bottom:4px">
+            <div style="height:100%;border-radius:6px;background:linear-gradient(90deg,#00B4D8,#6C63FF);width:${(c.totalPts/maxCatPts*100)}%"></div>
+          </div>
+          <div style="font-family:'Inter','Manjari',sans-serif;font-size:.72rem;color:var(--accent);font-weight:700">${c.totalPts} total points awarded</div>
+        </div>`).join('') : `<div style="color:var(--muted);text-align:center;padding:20px;font-size:.85rem">Categories ഇല്ല.</div>`}
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+      <div class="card" style="text-align:center;padding:14px">
+        <div style="font-family:'Montserrat','Manjari',sans-serif;font-size:1.6rem;color:var(--accent)">${progs.length}</div>
+        <div style="font-size:.62rem;color:var(--muted);letter-spacing:1px">PROGRAMS</div>
+      </div>
+      <div class="card" style="text-align:center;padding:14px">
+        <div style="font-family:'Montserrat','Manjari',sans-serif;font-size:1.6rem;color:var(--green)">${parts.length}</div>
+        <div style="font-size:.62rem;color:var(--muted);letter-spacing:1px">PARTICIPANTS</div>
+      </div>
+      <div class="card" style="text-align:center;padding:14px">
+        <div style="font-family:'Montserrat','Manjari',sans-serif;font-size:1.6rem;color:var(--gold)">${teams.filter(t=>t.total>0).length}</div>
+        <div style="font-size:.62rem;color:var(--muted);letter-spacing:1px">ACTIVE TEAMS</div>
+      </div>
+    </div>
+  `;
 }
 
 // ═══ SETTINGS ═══

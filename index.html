@@ -8,9 +8,9 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --gold:#E0A800;--gold2:#D98C00;
+  --gold:#247DE1;--gold2:#1A5FB4;
   --dark:#F6F7FB;--dark2:#FFFFFF;--dark3:#F0F1F6;--dark4:#E7E9F0;--dark5:#EEF0F6;
-  --text:#1A1A2E;--muted:#6B6B85;--accent:#247DE1;--accent2:#1A5FB4;--green:#0CA85E;--red:#E0344F;--silver:#8A8AA0;
+  --text:#000000;--muted:#000000;--accent:#247DE1;--accent2:#1A5FB4;--green:#0CA85E;--red:#E0344F;--silver:#8A8AA0;
   --sidebar:230px;
 }
 body{background:var(--dark);color:var(--text);font-family:'Poppins','Manjari',sans-serif;min-height:100vh;overflow-x:hidden}
@@ -149,8 +149,8 @@ select.form-input{cursor:pointer}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 18px;border:none;border-radius:9px;font-family:'Poppins',sans-serif;font-size:.86rem;font-weight:600;cursor:pointer;transition:all .2s}
 .btn-primary{background:linear-gradient(135deg,var(--accent),#5BA3EE);color:#fff;box-shadow:0 3px 12px rgba(36,125,225,.3)}
 .btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(36,125,225,.4)}
-.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--dark);font-weight:700}
-.btn-gold:hover{transform:translateY(-1px);box-shadow:0 5px 18px rgba(255,165,0,.4)}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#fff;font-weight:700}
+.btn-gold:hover{transform:translateY(-1px);box-shadow:0 5px 18px rgba(36,125,225,.4)}
 .btn-outline{background:transparent;border:1px solid rgba(20,20,40,0.168);color:var(--text)}
 .btn-outline:hover{border-color:var(--accent);color:var(--accent)}
 .btn-red{background:rgba(255,77,109,.1);border:1px solid rgba(255,77,109,.2);color:var(--red)}
@@ -189,7 +189,7 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
 .bg3{background:rgba(255,215,0,.18)}.bg4{background:rgba(0,180,216,.18)}.bg5{background:rgba(255,159,28,.18)}
 .bg6{background:rgba(168,218,220,.18)}.bg7{background:rgba(230,57,70,.18)}.bg8{background:rgba(155,93,229,.18)}.bg9{background:rgba(247,37,133,.18)}
 .bar0{background:linear-gradient(90deg,#247DE1,#5BA3EE)}.bar1{background:linear-gradient(90deg,#FF4D6D,#FF8FA3)}
-.bar2{background:linear-gradient(90deg,#00E57A,#7DFFB8)}.bar3{background:linear-gradient(90deg,#FFD700,#FFA500)}
+.bar2{background:linear-gradient(90deg,#00E57A,#7DFFB8)}.bar3{background:linear-gradient(90deg,#247DE1,#5BA3EE)}
 .bar4{background:linear-gradient(90deg,#00B4D8,#90E0EF)}.bar5{background:linear-gradient(90deg,#FF9F1C,#FFBF69)}
 .bar6{background:linear-gradient(90deg,#A8DADC,#CAF0F8)}.bar7{background:linear-gradient(90deg,#E63946,#FF758F)}
 .bar8{background:linear-gradient(90deg,#9B5DE5,#C77DFF)}.bar9{background:linear-gradient(90deg,#F72585,#FF85C8)}
@@ -638,7 +638,7 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
             <div class="card">
               <div class="card-title">THEME</div>
               <div class="form-field" style="margin-bottom:8px"><label>PRIMARY COLOR</label><input type="color" id="homePrimary" value="#247DE1" style="height:40px;width:100%;border-radius:10px;border:1px solid rgba(255,255,255,.1);cursor:pointer"></div>
-              <div class="form-field" style="margin-bottom:0"><label>ACCENT COLOR</label><input type="color" id="homeAccent" value="#FFD700" style="height:40px;width:100%;border-radius:10px;border:1px solid rgba(255,255,255,.1);cursor:pointer"></div>
+              <div class="form-field" style="margin-bottom:0"><label>ACCENT COLOR</label><input type="color" id="homeAccent" value="#1A5FB4" style="height:40px;width:100%;border-radius:10px;border:1px solid rgba(255,255,255,.1);cursor:pointer"></div>
             </div>
             <div class="card">
               <div class="card-title">ORGANIZER</div>
@@ -1053,7 +1053,7 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
 
 <script>
 // ═══ DATA ═══
-const TC=['#247DE1','#FF4D6D','#00E57A','#FFD700','#00B4D8','#FF9F1C','#A8DADC','#E63946','#9B5DE5','#F72585'];
+const TC=['#247DE1','#FF4D6D','#00E57A','#1A5FB4','#00B4D8','#FF9F1C','#A8DADC','#E63946','#9B5DE5','#F72585'];
 const TE=['🔵','🔴','🟢','🟡','🩵','🟠','🩶','❤️','🟣','🩷'];
 const DN=['Team 1','Team 2','Team 3','Team 4','Team 5','Team 6','Team 7','Team 8','Team 9','Team 10'];
 
@@ -2418,7 +2418,7 @@ function renderGallery() {
 }
 
 // ═══ HOME PAGE ═══
-let homeData = ld('pr_home', {title:'', tagline:'', date:'', venue:'', desc:'', org:'', contact:'', primary:'#247DE1', accent:'#FFD700'});
+let homeData = ld('pr_home', {title:'', tagline:'', date:'', venue:'', desc:'', org:'', contact:'', primary:'#247DE1', accent:'#1A5FB4'});
 function saveHomePage() {
   homeData = {
     title: document.getElementById('homeTitle')?.value || '',
@@ -2429,7 +2429,7 @@ function saveHomePage() {
     org: document.getElementById('homeOrg')?.value || '',
     contact: document.getElementById('homeContact')?.value || '',
     primary: document.getElementById('homePrimary')?.value || '#247DE1',
-    accent: document.getElementById('homeAccent')?.value || '#FFD700',
+    accent: document.getElementById('homeAccent')?.value || '#1A5FB4',
   };
   sd('pr_home', homeData);
   renderHomePreview();
@@ -2492,7 +2492,7 @@ function previewPublicPage(type) {
   const medal=['🥇','🥈','🥉'];
   if (type === 'home') {
     body = `<div style="max-width:500px;margin:0 auto;background:#0d0d1a;min-height:100vh">
-      <div style="background:linear-gradient(135deg,${d.primary||'#247DE1'},${d.accent||'#FFD700'}55);padding:40px 24px 32px;text-align:center">
+      <div style="background:linear-gradient(135deg,${d.primary||'#247DE1'},${d.accent||'#1A5FB4'}55);padding:40px 24px 32px;text-align:center">
         ${d.org?`<div style="font-size:.65rem;letter-spacing:3px;color:rgba(255,255,255,.7);font-family:'Inter','Manjari',sans-serif;margin-bottom:8px">${esc(d.org)}</div>`:''}
         <div style="font-family:'Montserrat','Manjari',sans-serif;font-size:2.4rem;letter-spacing:5px;color:#fff">${esc(d.title)||'EVENT'}</div>
         ${d.tagline?`<div style="font-size:.9rem;color:rgba(255,255,255,.8);margin-top:8px">${esc(d.tagline)}</div>`:''}
@@ -2504,9 +2504,9 @@ function previewPublicPage(type) {
       <div style="padding:20px 16px">
         ${d.desc?`<p style="font-size:.88rem;color:#ccc;line-height:1.7;margin-bottom:20px;padding:14px;background:rgba(255,255,255,.04);border-radius:10px">${esc(d.desc)}</p>`:''}
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px">
-          <div style="background:rgba(255,255,255,.06);border-radius:10px;padding:14px;text-align:center"><div style="font-family:'Montserrat','Manjari',sans-serif;font-size:1.8rem;color:${d.accent||'#FFD700'}">${teams.length}</div><div style="font-size:.62rem;color:#888;letter-spacing:1px">TEAMS</div></div>
-          <div style="background:rgba(255,255,255,.06);border-radius:10px;padding:14px;text-align:center"><div style="font-family:'Montserrat','Manjari',sans-serif;font-size:1.8rem;color:${d.accent||'#FFD700'}">${progs.length}</div><div style="font-size:.62rem;color:#888;letter-spacing:1px">PROGRAMS</div></div>
-          <div style="background:rgba(255,255,255,.06);border-radius:10px;padding:14px;text-align:center"><div style="font-family:'Montserrat','Manjari',sans-serif;font-size:1.8rem;color:${d.accent||'#FFD700'}">${parts.length}</div><div style="font-size:.62rem;color:#888;letter-spacing:1px">PARTICIPANTS</div></div>
+          <div style="background:rgba(255,255,255,.06);border-radius:10px;padding:14px;text-align:center"><div style="font-family:'Montserrat','Manjari',sans-serif;font-size:1.8rem;color:${d.accent||'#1A5FB4'}">${teams.length}</div><div style="font-size:.62rem;color:#888;letter-spacing:1px">TEAMS</div></div>
+          <div style="background:rgba(255,255,255,.06);border-radius:10px;padding:14px;text-align:center"><div style="font-family:'Montserrat','Manjari',sans-serif;font-size:1.8rem;color:${d.accent||'#1A5FB4'}">${progs.length}</div><div style="font-size:.62rem;color:#888;letter-spacing:1px">PROGRAMS</div></div>
+          <div style="background:rgba(255,255,255,.06);border-radius:10px;padding:14px;text-align:center"><div style="font-family:'Montserrat','Manjari',sans-serif;font-size:1.8rem;color:${d.accent||'#1A5FB4'}">${parts.length}</div><div style="font-size:.62rem;color:#888;letter-spacing:1px">PARTICIPANTS</div></div>
         </div>
         ${anns.length?`<div style="background:rgba(255,255,255,.04);border-radius:12px;padding:14px;margin-bottom:16px">
           <div style="font-family:'Montserrat','Manjari',sans-serif;letter-spacing:2px;font-size:.9rem;color:#aaa;margin-bottom:10px">LATEST ANNOUNCEMENTS</div>
@@ -2520,7 +2520,7 @@ function previewPublicPage(type) {
           ${standings.slice(0,5).map((t,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)">
             <span style="font-size:${i<3?'1.1rem':'.8rem'}">${medal[i]||i+1}</span>
             <span style="flex:1;font-size:.84rem;color:#eee">${esc(t.name)}</span>
-            <span style="font-family:'Inter','Manjari',sans-serif;font-size:.82rem;font-weight:700;color:#FFD700">${t.total}</span>
+            <span style="font-family:'Inter','Manjari',sans-serif;font-size:.82rem;font-weight:700;color:#1A5FB4">${t.total}</span>
           </div>`).join('')}
         </div>`:''}
         ${d.contact?`<div style="text-align:center;margin-top:20px;font-size:.72rem;color:#666;font-family:'Inter','Manjari',sans-serif">${esc(d.contact)}</div>`:''}
@@ -2532,7 +2532,7 @@ function previewPublicPage(type) {
       ${standings.length?standings.map((t,i)=>`<div style="display:flex;align-items:center;gap:12px;padding:12px;background:${i===0?'rgba(255,215,0,.08)':'rgba(255,255,255,.04)'};border:1px solid ${i===0?'rgba(255,215,0,.2)':'rgba(255,255,255,.07)'};border-radius:12px;margin-bottom:8px">
         <span style="font-size:${i<3?'1.3rem':'.9rem'};min-width:28px">${medal[i]||i+1}</span>
         <span style="flex:1;font-size:.9rem;font-weight:600;color:#eee">${esc(t.name)}</span>
-        <span style="font-family:'Inter','Manjari',sans-serif;font-weight:700;color:#FFD700;font-size:1rem">${t.total} pts</span>
+        <span style="font-family:'Inter','Manjari',sans-serif;font-weight:700;color:#1A5FB4;font-size:1rem">${t.total} pts</span>
       </div>`).join('') : '<div style="text-align:center;color:#666;padding:40px;font-size:.85rem">Results not available yet.</div>'}
     </div>`;
   }
@@ -2564,7 +2564,7 @@ function generatePublicHTML() {
 
   const d = homeData;
   const primary = d.primary || '#247DE1';
-  const accent2 = d.accent || '#FFD700';
+  const accent2 = d.accent || '#1A5FB4';
   const dateStr = d.date ? new Date(d.date).toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'}) : '';
   const medal = ['🥇','🥈','🥉'];
   const ANN_IC = {info:'📢',important:'⚠️',result:'🏆',schedule:'📅'};
@@ -2964,7 +2964,7 @@ function buildQRCardHTML(p) {
     <div style="padding:20px;text-align:center">
       <img src="${qrUrl(qrData, 220)}" style="width:200px;height:200px;border-radius:10px;background:#fff;padding:8px">
       <div style="font-family:'Montserrat','Manjari',sans-serif;font-size:1.3rem;letter-spacing:1px;color:#fff;margin-top:14px">${esc(p.name)}</div>
-      <div style="font-family:'Inter','Manjari',sans-serif;font-size:.85rem;color:#FFD700;margin-top:4px">CHEST NO: ${esc(p.chest)}</div>
+      <div style="font-family:'Inter','Manjari',sans-serif;font-size:.85rem;color:#1A5FB4;margin-top:4px">CHEST NO: ${esc(p.chest)}</div>
       ${cat ? `<div style="font-size:.78rem;color:#aaa;margin-top:6px">${esc(cat.name)} · Group ${esc(p.group||'-')}</div>` : ''}
     </div>
     <div style="text-align:center;padding:10px;border-top:1px solid rgba(255,255,255,.08)">

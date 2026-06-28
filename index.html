@@ -393,11 +393,7 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
               <option value="all">All Categories</option>
             </select>
             <select class="form-input" id="partFilterGroup" onchange="renderParticipants()" style="max-width:180px;padding:8px 12px">
-              <option value="all">All Groups</option>
-              <option value="A">Group A</option>
-              <option value="B">Group B</option>
-              <option value="C">Group C</option>
-              <option value="D">Group D</option>
+              <option value="all">All Teams</option>
             </select>
           </div>
         </div>
@@ -959,12 +955,9 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
         <option value="">— Select Category —</option>
       </select>
     </div>
-    <div class="form-field"><label>GROUP</label>
+    <div class="form-field"><label>TEAM</label>
       <select class="form-input" id="ptGroup">
-        <option value="A">Group A</option>
-        <option value="B">Group B</option>
-        <option value="C">Group C</option>
-        <option value="D">Group D</option>
+        <option value="">— Select Team —</option>
       </select>
     </div>
     <div class="modal-actions">
@@ -1359,7 +1352,9 @@ function openPartModal(pid){
   document.getElementById('partModalTitle').textContent=pid?'✏️ EDIT PARTICIPANT':'+ ADD PARTICIPANT';
   document.getElementById('ptName').value=p?p.name:'';
   document.getElementById('ptChest').value=p?p.chest:'';
-  document.getElementById('ptGroup').value=p?p.group:'A';
+  const grpSel=document.getElementById('ptGroup');
+  grpSel.innerHTML='<option value="">— Select Team —</option>'+teams.map(t=>`<option value="${t.id}" ${p&&p.group==t.id?'selected':''}>${esc(t.name)}</option>`).join('');
+  if(p) grpSel.value=p.group||'';
   const sel=document.getElementById('ptCat');
   sel.innerHTML='<option value="">— Select Category —</option>'+cats.map(c=>`<option value="${c.id}" ${p&&p.catId===c.id?'selected':''}>${c.emoji} ${esc(c.name)}</option>`).join('');
   if(p) sel.value=p.catId||'';
@@ -1396,13 +1391,19 @@ function renderParticipants(){
   if(catSel){
     catSel.innerHTML='<option value="all">All Categories</option>'+cats.map(c=>`<option value="${c.id}">${c.emoji} ${esc(c.name)}</option>`).join('');
   }
+  const grpSel=document.getElementById('partFilterGroup');
+  if(grpSel){
+    const cur=grpSel.value;
+    grpSel.innerHTML='<option value="all">All Teams</option>'+teams.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('');
+    if(cur) grpSel.value=cur;
+  }
   const search=(document.getElementById('partSearch')?.value||'').toLowerCase();
   const fCat=document.getElementById('partFilterCat')?.value||'all';
   const fGrp=document.getElementById('partFilterGroup')?.value||'all';
   let list=parts.filter(p=>{
     const matchSearch=!search||p.name.toLowerCase().includes(search)||p.chest.toLowerCase().includes(search);
     const matchCat=fCat==='all'||p.catId==parseInt(fCat);
-    const matchGrp=fGrp==='all'||p.group===fGrp;
+    const matchGrp=fGrp==='all'||p.group==fGrp;
     return matchSearch&&matchCat&&matchGrp;
   });
   const wrap=document.getElementById('partTableWrap');
@@ -1410,16 +1411,17 @@ function renderParticipants(){
   if(!list.length){wrap.innerHTML=`<div class="empty-state"><div class="ei">🧑‍🤝‍🧑</div><p>${parts.length?'No matching participants.':'No participants yet. "+ Add Participant" ക്ലിക്ക് ചെയ്ത് ചേർക്കുക.'}</p></div>`;return}
   wrap.innerHTML=`<div style="overflow-x:auto"><table class="lb-table" style="width:100%">
     <thead><tr>
-      <th>#</th><th>NAME</th><th>CHEST NO.</th><th>CATEGORY</th><th>GROUP</th><th></th>
+      <th>#</th><th>NAME</th><th>CHEST NO.</th><th>CATEGORY</th><th>TEAM</th><th></th>
     </tr></thead><tbody>
     ${list.map((p,i)=>{
       const cat=cats.find(c=>c.id===p.catId);
+      const team=teams.find(t=>t.id==p.group);
       return `<tr>
         <td style="color:var(--muted);font-size:.76rem">${i+1}</td>
         <td style="font-weight:600">${esc(p.name)}</td>
         <td style="font-family:'Inter','Manjari',sans-serif;color:var(--gold)">${esc(p.chest)}</td>
         <td>${cat?`<span class="mem-cat-tag tc${cat.color} bg${cat.color}">${cat.emoji} ${esc(cat.name)}</span>`:'<span style="color:var(--muted)">—</span>'}</td>
-        <td style="font-family:'Inter','Manjari',sans-serif;font-size:.76rem;color:var(--accent)">Group ${esc(p.group||'—')}</td>
+        <td style="font-family:'Inter','Manjari',sans-serif;font-size:.76rem;color:var(--accent)">${team?esc(team.name):'—'}</td>
         <td style="display:flex;gap:5px;padding:6px 10px">
           <button class="btn btn-outline btn-xs" onclick="openPartModal('${p.id}')">✏️</button>
           <button class="btn btn-red btn-xs" onclick="delPart('${p.id}')">🗑</button>
@@ -2719,7 +2721,8 @@ function generatePublicHTML() {
     const lookup = {};
     parts.forEach(p => {
       const cat = cats.find(c => c.id === p.catId);
-      lookup[p.chest] = { name: p.name, category: cat ? cat.name : '', group: p.group || '', results: [] };
+      const ptTeam = teams.find(t => t.id == p.group);
+      lookup[p.chest] = { name: p.name, category: cat ? cat.name : '', group: ptTeam ? ptTeam.name : '', results: [] };
     });
     progs.forEach(prog => {
       let entries = [];
@@ -2901,7 +2904,7 @@ function generatePublicHTML() {
       const rowsHtml = rec.results.length
         ? rec.results.map(r => '<div class="sr-row"><span class="sr-rank">' + (medal[r.rank] || ('#'+r.rank)) + '</span><div class="sr-prog">' + r.program + '<div class="sr-team">' + r.team + '</div></div><span class="sr-score">' + r.score + ' pts</span></div>').join('')
         : '<div class="sr-empty">No results recorded yet for this participant.</div>';
-      box.innerHTML = '<div class="sr-card"><div class="sr-name">' + rec.name + '</div><div class="sr-meta">Chest No: ' + chest + (rec.category ? ' · ' + rec.category : '') + (rec.group ? ' · Group ' + rec.group : '') + '</div><div style="margin-top:12px">' + rowsHtml + '</div></div>';
+      box.innerHTML = '<div class="sr-card"><div class="sr-name">' + rec.name + '</div><div class="sr-meta">Chest No: ' + chest + (rec.category ? ' · ' + rec.category : '') + (rec.group ? ' · ' + rec.group : '') + '</div><div style="margin-top:12px">' + rowsHtml + '</div></div>';
     }
     document.getElementById('chestSearchInput')?.addEventListener('keydown', function(e){ if (e.key === 'Enter') searchByChest(); });
   <\/script>
@@ -2944,7 +2947,7 @@ function renderQRCards() {
       <div style="padding:0 12px 12px">
         <div style="font-family:'Montserrat','Manjari',sans-serif;font-size:1rem;letter-spacing:1px;color:var(--text)">${esc(p.name)}</div>
         <div style="font-family:'Inter','Manjari',sans-serif;font-size:.72rem;color:var(--gold);margin-top:2px">#${esc(p.chest)}</div>
-        ${cat ? `<div style="font-size:.68rem;color:var(--muted);margin-top:2px">${esc(cat.name)} · Group ${esc(p.group||'-')}</div>` : ''}
+        ${cat ? `<div style="font-size:.68rem;color:var(--muted);margin-top:2px">${esc(cat.name)}${(()=>{const tm=teams.find(t=>t.id==p.group);return tm?' · '+esc(tm.name):'';})()}</div>` : ''}
         <div style="margin-top:6px;font-size:.65rem;padding:3px 8px;border-radius:20px;display:inline-block;background:${isPresent?'rgba(0,229,122,.15)':'rgba(255,255,255,.05)'};color:${isPresent?'var(--green)':'var(--muted)'}">${isPresent?'✓ Present':'Not marked'}</div>
       </div>
       <div style="padding:8px;border-top:1px solid rgba(255,255,255,.06)">
@@ -2965,7 +2968,7 @@ function buildQRCardHTML(p) {
       <img src="${qrUrl(qrData, 220)}" style="width:200px;height:200px;border-radius:10px;background:#fff;padding:8px">
       <div style="font-family:'Montserrat','Manjari',sans-serif;font-size:1.3rem;letter-spacing:1px;color:#fff;margin-top:14px">${esc(p.name)}</div>
       <div style="font-family:'Inter','Manjari',sans-serif;font-size:.85rem;color:#1A5FB4;margin-top:4px">CHEST NO: ${esc(p.chest)}</div>
-      ${cat ? `<div style="font-size:.78rem;color:#aaa;margin-top:6px">${esc(cat.name)} · Group ${esc(p.group||'-')}</div>` : ''}
+      ${cat ? `<div style="font-size:.78rem;color:#aaa;margin-top:6px">${esc(cat.name)}${(()=>{const tm=teams.find(t=>t.id==p.group);return tm?' · '+esc(tm.name):'';})()}</div>` : ''}
     </div>
     <div style="text-align:center;padding:10px;border-top:1px solid rgba(255,255,255,.08)">
       <div style="font-size:.6rem;color:#555;font-family:'Inter','Manjari',sans-serif;letter-spacing:1px">PRORESULT · DEZIGN HUB</div>

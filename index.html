@@ -905,7 +905,7 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
 
         <!-- Program + Judge selector -->
         <div class="card" style="margin-bottom:14px">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
             <div class="form-field" style="margin:0">
               <label>PROGRAM</label>
               <select class="form-input" id="meProgSel" onchange="onMeProgChange()" style="padding:8px 12px">
@@ -914,31 +914,47 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
             </div>
             <div class="form-field" style="margin:0">
               <label>JUDGE NAME</label>
-              <input class="form-input" id="meJudgeName" placeholder="Judge name..." style="padding:8px 12px">
+              <input class="form-input" id="meJudgeName" placeholder="Judge name..." style="padding:8px 12px" oninput="updateMeJudgeHeader()">
             </div>
           </div>
-          <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
-            <button class="btn btn-outline btn-sm" onclick="meSortBy('code')">Sort by Code Letter</button>
-            <button class="btn btn-outline btn-sm" onclick="meSortBy('marks')">Sort by Marks</button>
-            <div style="flex:1"></div>
-            <span id="mePublishedBadge" style="display:none;background:rgba(224,52,79,.1);border:1px solid rgba(224,52,79,.3);color:var(--red);font-size:.72rem;padding:4px 10px;border-radius:8px;align-items:center;gap:5px">⚠️ Result Published — editing affects live leaderboard</span>
-          </div>
+          <span id="mePublishedBadge" style="display:none;background:rgba(224,52,79,.08);border:1px solid rgba(224,52,79,.25);color:var(--red);font-size:.72rem;padding:6px 12px;border-radius:8px">⚠️ Scores already submitted — editing will update live results</span>
         </div>
 
-        <!-- Mark table -->
+        <!-- Add row manually -->
         <div class="card" id="meTableCard" style="display:none">
+          <!-- Add new entry row -->
+          <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:flex-end">
+            <div class="form-field" style="margin:0;flex:0 0 100px">
+              <label>CHEST #</label>
+              <input class="form-input" id="meAddChest" placeholder="e.g. 101" style="padding:7px 10px" onkeydown="if(event.key==='Enter')addMeRow()">
+            </div>
+            <div class="form-field" style="margin:0;flex:0 0 80px">
+              <label>CODE</label>
+              <input class="form-input" id="meAddCode" placeholder="A" style="padding:7px 10px;text-transform:uppercase" maxlength="4" onkeydown="if(event.key==='Enter')addMeRow()">
+            </div>
+            <div class="form-field" style="margin:0;flex:1;min-width:120px">
+              <label>MARK</label>
+              <input class="form-input" id="meAddMark" type="number" placeholder="0" style="padding:7px 10px" onkeydown="if(event.key==='Enter')addMeRow()">
+            </div>
+            <button class="btn btn-primary btn-sm" style="flex-shrink:0;height:38px" onclick="addMeRow()">+ Add</button>
+          </div>
+
+          <!-- Entries table -->
           <div style="overflow-x:auto">
-            <table class="lb-table" style="width:100%" id="meTable">
+            <table class="lb-table" style="width:100%">
               <thead><tr>
                 <th>CHEST #</th>
-                <th>CODE LETTER</th>
-                <th>NAME</th>
+                <th>CODE</th>
+                <th>PARTICIPANT</th>
                 <th id="meJudgeHeader">MARKS</th>
+                <th></th>
               </tr></thead>
               <tbody id="meTableBody"></tbody>
             </table>
           </div>
-          <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+          <div id="meSortBtns" style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+            <button class="btn btn-outline btn-sm" onclick="meSortBy('code')" id="meSortCode">Sort by Code</button>
+            <button class="btn btn-outline btn-sm" onclick="meSortBy('marks')" id="meSortMarks">Sort by Marks</button>
             <button class="btn btn-outline btn-sm" onclick="clearMeMarks()">Clear All</button>
             <div style="flex:1"></div>
             <button class="btn btn-primary" onclick="submitMeMarks()">Submit Marks →</button>
@@ -947,7 +963,7 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
 
         <div id="meEmptyState" class="empty-state">
           <div class="ei">📝</div>
-          <p>Select a program to start entering marks</p>
+          <p>Select a program above to start entering marks</p>
         </div>
       </div>
 
@@ -1263,7 +1279,6 @@ function reloadAllData(){
   if (typeof homeData !== 'undefined') homeData = ld('pr_home', homeData);
   if (typeof attendance !== 'undefined') attendance = ld('pr_attendance', attendance);
   meJudgeData = ld('pr_me_judges', meJudgeData||{});
-  meCodeMap = ld('pr_me_codes', meCodeMap||{});
 }
 function refreshAllViews(){
   reloadAllData();
@@ -3387,200 +3402,178 @@ function downloadAwardsCertificate(type) {
 
 // ═══ MARK ENTRY ═══
 let meCurrentProg = null;
-let meEntries = []; // [{chest, name, partId, teamId, code, mark}]
-let meSortMode = 'code'; // 'code' | 'marks'
-let meJudgeData = ld('pr_me_judges', {}); // {progId: judgeName}
-let meCodeMap = ld('pr_me_codes', {}); // {progId: {partId: codeLetter}}
-
-const CODE_LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+let meEntries = []; // [{chest, code, mark, name (auto-looked up from parts)}]
+let meSortMode = 'added'; // 'code' | 'marks' | 'added'
+let meJudgeData = ld('pr_me_judges', {}); // {progId: {judge, entries}}
 
 function renderMarkEntry() {
   const sel = document.getElementById('meProgSel');
   if (!sel) return;
+  const prev = sel.value;
   sel.innerHTML = '<option value="">— Select Program —</option>' +
     progs.map(p => {
       const cat = cats.find(c => c.id === p.catId);
-      return `<option value="${p.id}">${esc(p.name)}${cat?' ('+esc(cat.name)+')':''}`;
+      return `<option value="${p.id}">${esc(p.name)}${cat?' — '+esc(cat.name):''}`;
     }).join('');
-  if (meCurrentProg) {
-    sel.value = meCurrentProg;
-    buildMeTable();
-  }
+  if (prev) { sel.value = prev; if (sel.value) onMeProgChange(); }
   renderMeDashStatus();
 }
 
 function onMeProgChange() {
-  const sel = document.getElementById('meProgSel');
-  meCurrentProg = sel.value || null;
+  const val = document.getElementById('meProgSel').value;
+  meCurrentProg = val || null;
   if (!meCurrentProg) {
     document.getElementById('meTableCard').style.display = 'none';
     document.getElementById('meEmptyState').style.display = 'block';
     return;
   }
-  // restore judge name
-  const judgeName = meJudgeData[meCurrentProg] || '';
-  document.getElementById('meJudgeName').value = judgeName;
-  buildMeTable();
-}
-
-function buildMeTable() {
-  if (!meCurrentProg) return;
+  // Load saved entries for this program
+  const saved = meJudgeData[meCurrentProg];
+  document.getElementById('meJudgeName').value = saved ? (saved.judge || '') : '';
+  meEntries = saved ? [...(saved.entries || [])] : [];
+  updateMeJudgeHeader();
+  // Check if published (has submitted scores)
   const prog = progs.find(p => p.id == meCurrentProg);
-  if (!prog) return;
-
-  // Get participants for this program (from parts list)
-  // Assign code letters if not already done
-  if (!meCodeMap[meCurrentProg]) {
-    meCodeMap[meCurrentProg] = {};
-    const shuffled = [...parts].sort(() => Math.random() - 0.5); // random shuffle for blind judging
-    shuffled.forEach((p, i) => {
-      meCodeMap[meCurrentProg][p.id] = CODE_LETTERS[i % CODE_LETTERS.length] + (i >= 26 ? Math.floor(i/26) : '');
-    });
-    sd('pr_me_codes', meCodeMap);
+  let hasScores = false;
+  if (prog) {
+    teams.forEach(t => { if (getMProg(prog.id, t.id).length > 0) hasScores = true; });
   }
-
-  // Build entries from participants
-  meEntries = parts.map(p => {
-    // check if this participant already has scores in this program
-    let existingMark = '';
-    teams.forEach(t => {
-      getMProg(prog.id, t.id).forEach(m => {
-        if (m.name === p.name) existingMark = m.score;
-      });
-    });
-    const team = teams.find(t => t.id == p.group);
-    return {
-      chest: p.chest,
-      name: p.name,
-      partId: p.id,
-      teamId: p.group,
-      teamName: team ? team.name : '—',
-      code: meCodeMap[meCurrentProg][p.id] || '?',
-      mark: existingMark !== '' ? String(existingMark) : ''
-    };
-  });
-
-  // Check if result is published (has scores)
-  const hasScores = meEntries.some(e => e.mark !== '');
-  document.getElementById('mePublishedBadge').style.display = hasScores ? 'flex' : 'none';
-
-  meSortAndRender();
+  document.getElementById('mePublishedBadge').style.display = hasScores ? 'block' : 'none';
   document.getElementById('meTableCard').style.display = 'block';
   document.getElementById('meEmptyState').style.display = 'none';
+  renderMeTable();
+}
 
-  // Update judge header
-  const judgeName = document.getElementById('meJudgeName').value.trim();
-  document.getElementById('meJudgeHeader').textContent = judgeName || 'MARKS';
+function updateMeJudgeHeader() {
+  const jn = document.getElementById('meJudgeName')?.value.trim() || 'MARKS';
+  const el = document.getElementById('meJudgeHeader');
+  if (el) el.textContent = jn;
+}
+
+function addMeRow() {
+  const chest = document.getElementById('meAddChest').value.trim();
+  const code = document.getElementById('meAddCode').value.trim().toUpperCase();
+  const mark = document.getElementById('meAddMark').value.trim();
+  if (!chest) { showToast('Chest number required!', true); return; }
+  if (meEntries.find(e => e.chest === chest)) { showToast('Chest # already added!', true); return; }
+  // look up participant name
+  const part = parts.find(p => p.chest === chest);
+  meEntries.push({ chest, code, mark, name: part ? part.name : '' });
+  saveMeDraft();
+  renderMeTable();
+  // clear inputs and focus chest for fast sequential entry
+  document.getElementById('meAddChest').value = '';
+  document.getElementById('meAddCode').value = '';
+  document.getElementById('meAddMark').value = '';
+  document.getElementById('meAddChest').focus();
+}
+
+function deleteMeRow(chest) {
+  meEntries = meEntries.filter(e => e.chest !== chest);
+  saveMeDraft();
+  renderMeTable();
+}
+
+function updateMeEntry(chest, field, val) {
+  const entry = meEntries.find(e => e.chest === chest);
+  if (entry) { entry[field] = val; saveMeDraft(); }
+}
+
+function saveMeDraft() {
+  if (!meCurrentProg) return;
+  const judge = document.getElementById('meJudgeName')?.value.trim() || '';
+  meJudgeData[meCurrentProg] = { judge, entries: meEntries };
+  sd('pr_me_judges', meJudgeData);
 }
 
 function meSortBy(mode) {
   meSortMode = mode;
-  meSortAndRender();
+  renderMeTable();
 }
 
-function meSortAndRender() {
-  const sorted = [...meEntries];
-  if (meSortMode === 'code') {
-    sorted.sort((a,b) => a.code.localeCompare(b.code));
-  } else {
-    sorted.sort((a,b) => {
-      const ma = parseFloat(a.mark) || -1;
-      const mb = parseFloat(b.mark) || -1;
-      return mb - ma;
-    });
-  }
-
+function renderMeTable() {
   const tbody = document.getElementById('meTableBody');
   if (!tbody) return;
+  const sorted = [...meEntries];
+  if (meSortMode === 'code') sorted.sort((a,b) => a.code.localeCompare(b.code));
+  else if (meSortMode === 'marks') sorted.sort((a,b) => (parseFloat(b.mark)||0) - (parseFloat(a.mark)||0));
+
+  if (!sorted.length) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--muted);font-size:.82rem">No entries yet — add chest numbers above</td></tr>`;
+    return;
+  }
   tbody.innerHTML = sorted.map(e => `<tr>
-    <td style="font-family:'Inter','Manjari',sans-serif;font-weight:600;color:var(--accent)">${esc(e.chest)}</td>
+    <td style="font-family:'Inter','Manjari',sans-serif;font-weight:700;color:var(--accent)">${esc(e.chest)}</td>
     <td>
-      <div style="background:var(--dark4);border-radius:8px;padding:5px 12px;font-family:'Montserrat','Manjari',sans-serif;font-size:1rem;font-weight:700;text-align:center;display:inline-block;min-width:38px;color:var(--accent)">${esc(e.code)}</div>
+      <input class="form-input" value="${esc(e.code)}" maxlength="4"
+        style="width:60px;padding:5px 8px;text-align:center;font-weight:700;font-size:.9rem;text-transform:uppercase"
+        onchange="updateMeEntry('${e.chest}','code',this.value.toUpperCase())"
+        oninput="this.value=this.value.toUpperCase()">
+    </td>
+    <td style="font-size:.82rem">${e.name ? esc(e.name) : '<span style="color:var(--muted)">—</span>'}</td>
+    <td>
+      <input type="number" class="form-input" value="${esc(e.mark)}" placeholder="—" min="0"
+        style="width:80px;padding:5px 8px;text-align:center;font-weight:700;font-size:.95rem"
+        onchange="updateMeEntry('${e.chest}','mark',this.value)"
+        oninput="updateMeEntry('${e.chest}','mark',this.value)">
     </td>
     <td>
-      <div style="font-weight:600;font-size:.85rem">${esc(e.name)}</div>
-      <div style="font-size:.7rem;color:var(--muted)">${esc(e.teamName)}</div>
-    </td>
-    <td>
-      <input type="number" class="form-input" min="0" max="${progs.find(p=>p.id==meCurrentProg)?.maxScore||100}"
-        placeholder="—" value="${esc(e.mark)}"
-        style="max-width:90px;padding:6px 10px;text-align:center;font-weight:700;font-size:.95rem"
-        onchange="meSaveDraft('${e.partId}',this.value)"
-        oninput="meSaveDraft('${e.partId}',this.value)">
+      <button class="btn btn-red btn-xs" onclick="deleteMeRow('${e.chest}')">✕</button>
     </td>
   </tr>`).join('');
-
-  // Update sort button highlights
-  document.querySelectorAll('.me-sort-btn').forEach(b => b.classList.remove('btn-primary'));
-}
-
-function meSaveDraft(partId, val) {
-  const entry = meEntries.find(e => e.partId === partId);
-  if (entry) entry.mark = val;
 }
 
 function clearMeMarks() {
-  if (!confirm('All entered marks will be cleared. Continue?')) return;
-  meEntries.forEach(e => e.mark = '');
-  meSortAndRender();
-  showToast('Marks cleared');
+  if (!confirm('All rows will be deleted. Continue?')) return;
+  meEntries = [];
+  saveMeDraft();
+  renderMeTable();
+  showToast('Cleared');
 }
 
 function submitMeMarks() {
   if (!meCurrentProg) return;
   const prog = progs.find(p => p.id == meCurrentProg);
   if (!prog) return;
+  if (!meEntries.length) { showToast('No entries to submit!', true); return; }
 
-  // Save judge name
-  const judgeName = document.getElementById('meJudgeName').value.trim() || 'Judge';
-  meJudgeData[meCurrentProg] = judgeName;
-  sd('pr_me_judges', meJudgeData);
-  document.getElementById('meJudgeHeader').textContent = judgeName;
+  saveMeDraft(); // save judge name + entries first
 
-  // Save marks to teams via getMProg pattern
   let saved = 0;
   meEntries.forEach(e => {
-    if (e.mark === '' || e.mark === null || e.mark === undefined) return;
+    if (e.mark === '' || e.mark === null) return;
     const score = parseFloat(e.mark);
     if (isNaN(score)) return;
-
-    // Find which team this participant belongs to
-    const teamId = e.teamId;
-    const team = teams.find(t => t.id == teamId);
+    const part = parts.find(p => p.chest === e.chest);
+    if (!part) return;
+    const team = teams.find(t => t.id == part.group);
     if (!team) return;
-
-    // Update or add member score for this program
     if (!team.members) team.members = [];
-    // Find existing entry for this prog
-    const progKey = String(prog.id);
-    let progMembers = team.members.filter(m => String(m.pid) !== progKey);
-    // Check if name already exists for this prog
-    const existingIdx = team.members.findIndex(m => String(m.pid) === progKey && m.name === e.name);
-    if (existingIdx >= 0) {
-      team.members[existingIdx].score = score;
-    } else {
-      team.members.push({pid: prog.id, name: e.name, score});
-    }
+    const existIdx = team.members.findIndex(m => String(m.pid) === String(prog.id) && m.name === part.name);
+    if (existIdx >= 0) team.members[existIdx].score = score;
+    else team.members.push({ pid: prog.id, name: part.name, score });
     saved++;
   });
 
   sd('pr_teams', teams);
   showToast(`${saved} marks submitted ✓`);
-  buildMeTable(); // refresh to show updated scores
+  document.getElementById('mePublishedBadge').style.display = 'block';
   renderMeDashStatus();
 }
 
 function renderMeDashStatus() {
   const el = document.getElementById('dashMeStatus');
   if (!el) return;
-  const withJudge = progs.filter(p => meJudgeData[p.id]);
+  const withJudge = progs.filter(p => meJudgeData[p.id]?.judge || meJudgeData[p.id]?.entries?.length);
   if (!withJudge.length) { el.innerHTML = ''; return; }
-  el.innerHTML = withJudge.slice(0,6).map(p => `
-    <div onclick="showPage('markentry');setTimeout(()=>{document.getElementById('meProgSel').value='${p.id}';onMeProgChange();},100)"
+  el.innerHTML = withJudge.slice(0,6).map(p => {
+    const d = meJudgeData[p.id];
+    return `<div onclick="showPage('markentry');setTimeout(()=>{document.getElementById('meProgSel').value='${p.id}';onMeProgChange();},120)"
       style="background:var(--dark3);border:1px solid rgba(36,125,225,.15);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:.74rem">
       <span style="color:var(--accent);font-weight:600">${esc(p.name)}</span>
-      <span style="color:var(--muted);margin-left:6px">${esc(meJudgeData[p.id])}</span>
-    </div>`).join('') + (withJudge.length > 6 ? `<div style="font-size:.7rem;color:var(--muted);padding:6px">+${withJudge.length-6} more</div>` : '');
+      <span style="color:var(--muted);margin-left:6px">${d?.entries?.length||0} entries</span>
+    </div>`;
+  }).join('') + (withJudge.length > 6 ? `<div style="font-size:.7rem;color:var(--muted);padding:6px">+${withJudge.length-6} more</div>` : '');
 }
 
 // ═══ ANALYTICS ═══

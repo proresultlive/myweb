@@ -293,6 +293,7 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
       <div class="nav-item" onclick="showPage('gallery')"><span class="ni">🖼</span>Gallery</div>
       <div class="nav-item" onclick="showPage('publish')" style="color:var(--green);border-left-color:rgba(0,229,122,.0)"><span class="ni">🚀</span>Publish</div>
       <div class="nav-section">TOOLS</div>
+      <div class="nav-item" onclick="showPage('markentry')" style="color:var(--accent);font-weight:600"><span class="ni">📝</span>Mark Entry</div>
       <div class="nav-item" onclick="showPage('templates')"><span class="ni">🎨</span>Templates</div>
       <div class="nav-item" onclick="showPage('qrcards')"><span class="ni">📱</span>QR Cards</div>
       <div class="nav-item" onclick="showPage('attendance')"><span class="ni">✅</span>Attendance</div>
@@ -334,6 +335,21 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
           <div class="card"><div class="card-title">🏅 Quick Standings</div><div id="dashStandings"></div></div>
         </div>
         <div class="card"><div class="card-title">👥 Team Overview</div><div id="dashTeams"></div></div>
+
+        <!-- MARK ENTRY QUICK ACCESS -->
+        <div class="card" style="margin-top:18px;border:1px solid rgba(36,125,225,.25);background:rgba(36,125,225,.04)">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+            <div style="display:flex;align-items:center;gap:14px">
+              <div style="font-size:2rem">📝</div>
+              <div>
+                <div style="font-family:'Montserrat','Manjari',sans-serif;font-size:1rem;letter-spacing:1px;color:var(--accent);margin-bottom:3px">MARK ENTRY</div>
+                <div style="font-size:.78rem;color:var(--muted)">Judge-ന്റെ marks enter ചെയ്യുക — Code Letter system സഹിതം</div>
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="showPage('markentry')" style="white-space:nowrap">Open Mark Entry →</button>
+          </div>
+          <div id="dashMeStatus" style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"></div>
+        </div>
 
         <!-- HOW TO USE -->
         <div class="card" style="margin-top:18px">
@@ -880,6 +896,61 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
         <div id="awardsContent"></div>
       </div>
 
+      <!-- ── MARK ENTRY ── -->
+      <div class="page" id="page-markentry">
+        <div class="prog-header">
+          <h2>📝 MARK ENTRY</h2>
+          <div style="font-size:.75rem;color:var(--muted);font-family:'Inter','Manjari',sans-serif">Judge Mark Entry System</div>
+        </div>
+
+        <!-- Program + Judge selector -->
+        <div class="card" style="margin-bottom:14px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="form-field" style="margin:0">
+              <label>PROGRAM</label>
+              <select class="form-input" id="meProgSel" onchange="onMeProgChange()" style="padding:8px 12px">
+                <option value="">— Select Program —</option>
+              </select>
+            </div>
+            <div class="form-field" style="margin:0">
+              <label>JUDGE NAME</label>
+              <input class="form-input" id="meJudgeName" placeholder="Judge name..." style="padding:8px 12px">
+            </div>
+          </div>
+          <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-outline btn-sm" onclick="meSortBy('code')">Sort by Code Letter</button>
+            <button class="btn btn-outline btn-sm" onclick="meSortBy('marks')">Sort by Marks</button>
+            <div style="flex:1"></div>
+            <span id="mePublishedBadge" style="display:none;background:rgba(224,52,79,.1);border:1px solid rgba(224,52,79,.3);color:var(--red);font-size:.72rem;padding:4px 10px;border-radius:8px;align-items:center;gap:5px">⚠️ Result Published — editing affects live leaderboard</span>
+          </div>
+        </div>
+
+        <!-- Mark table -->
+        <div class="card" id="meTableCard" style="display:none">
+          <div style="overflow-x:auto">
+            <table class="lb-table" style="width:100%" id="meTable">
+              <thead><tr>
+                <th>CHEST #</th>
+                <th>CODE LETTER</th>
+                <th>NAME</th>
+                <th id="meJudgeHeader">MARKS</th>
+              </tr></thead>
+              <tbody id="meTableBody"></tbody>
+            </table>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+            <button class="btn btn-outline btn-sm" onclick="clearMeMarks()">Clear All</button>
+            <div style="flex:1"></div>
+            <button class="btn btn-primary" onclick="submitMeMarks()">Submit Marks →</button>
+          </div>
+        </div>
+
+        <div id="meEmptyState" class="empty-state">
+          <div class="ei">📝</div>
+          <p>Select a program to start entering marks</p>
+        </div>
+      </div>
+
       <!-- ── ANALYTICS ── -->
       <div class="page" id="page-analytics">
         <div class="prog-header">
@@ -1191,6 +1262,8 @@ function reloadAllData(){
   if (typeof gallery !== 'undefined') gallery = ld('pr_gallery', gallery);
   if (typeof homeData !== 'undefined') homeData = ld('pr_home', homeData);
   if (typeof attendance !== 'undefined') attendance = ld('pr_attendance', attendance);
+  meJudgeData = ld('pr_me_judges', meJudgeData||{});
+  meCodeMap = ld('pr_me_codes', meCodeMap||{});
 }
 function refreshAllViews(){
   reloadAllData();
@@ -1268,7 +1341,7 @@ function showPage(pg){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const pel=document.getElementById('page-'+pg);
   if(pel) pel.classList.add('active');
-  const T={dashboard:'DASHBOARD',participants:'PARTICIPANTS',programs:'PROGRAMS',teams:'TEAMS',results:'RESULTS',liveresults:'LIVE RESULTS',home:'HOME PAGE',announcements:'ANNOUNCEMENTS',leaderboard:'LEADERBOARD',gallery:'GALLERY',publish:'PUBLISH',templates:'TEMPLATES',qrcards:'QR CARDS',attendance:'ATTENDANCE',awards:'AWARDS',analytics:'ANALYTICS',history:'HISTORY',settings:'SETTINGS'};
+  const T={dashboard:'DASHBOARD',participants:'PARTICIPANTS',programs:'PROGRAMS',teams:'TEAMS',results:'RESULTS',liveresults:'LIVE RESULTS',home:'HOME PAGE',announcements:'ANNOUNCEMENTS',leaderboard:'LEADERBOARD',gallery:'GALLERY',publish:'PUBLISH',templates:'TEMPLATES',qrcards:'QR CARDS',attendance:'ATTENDANCE',awards:'AWARDS',markentry:'MARK ENTRY',analytics:'ANALYTICS',history:'HISTORY',settings:'SETTINGS'};
   document.getElementById('topbarTitle').textContent=T[pg]||pg.toUpperCase();
   document.querySelectorAll('.nav-item').forEach(n=>{if(n.textContent.toLowerCase().includes(pg.toLowerCase().slice(0,4)))n.classList.add('active')});
   document.getElementById('sidebar')?.classList.remove('open');
@@ -1289,6 +1362,7 @@ function showPage(pg){
   if(pg==='attendance'){switchAttTab('scan');}
   if(pg==='awards') calcAwards();
   if(pg==='analytics') renderAnalytics();
+  if(pg==='markentry') renderMarkEntry();
   if(pg==='settings'){
     const isAdmin=curUser&&(curUser.username==='admin'||curUser.isAdmin===true);
     if(!isAdmin){showToast('Admin access only!',true);showPage('dashboard');return;}
@@ -1342,6 +1416,7 @@ function renderDash(){
   if(document.getElementById('nbPart')) document.getElementById('nbPart').textContent=parts.length;
   if(document.getElementById('nbTeams')) document.getElementById('nbTeams').textContent=teams.length;
   if(document.getElementById('nbAnn')) document.getElementById('nbAnn').textContent=anns.length;
+  if(typeof renderMeDashStatus==='function') renderMeDashStatus();
 }
 
 // ═══ PARTICIPANTS ═══
@@ -3308,6 +3383,204 @@ function downloadAwardsCertificate(type) {
   </div>
   <script>window.onload=()=>setTimeout(()=>window.print(),700)<\\/script></body></html>`);
   w.document.close(); w.focus();
+}
+
+// ═══ MARK ENTRY ═══
+let meCurrentProg = null;
+let meEntries = []; // [{chest, name, partId, teamId, code, mark}]
+let meSortMode = 'code'; // 'code' | 'marks'
+let meJudgeData = ld('pr_me_judges', {}); // {progId: judgeName}
+let meCodeMap = ld('pr_me_codes', {}); // {progId: {partId: codeLetter}}
+
+const CODE_LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+function renderMarkEntry() {
+  const sel = document.getElementById('meProgSel');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— Select Program —</option>' +
+    progs.map(p => {
+      const cat = cats.find(c => c.id === p.catId);
+      return `<option value="${p.id}">${esc(p.name)}${cat?' ('+esc(cat.name)+')':''}`;
+    }).join('');
+  if (meCurrentProg) {
+    sel.value = meCurrentProg;
+    buildMeTable();
+  }
+  renderMeDashStatus();
+}
+
+function onMeProgChange() {
+  const sel = document.getElementById('meProgSel');
+  meCurrentProg = sel.value || null;
+  if (!meCurrentProg) {
+    document.getElementById('meTableCard').style.display = 'none';
+    document.getElementById('meEmptyState').style.display = 'block';
+    return;
+  }
+  // restore judge name
+  const judgeName = meJudgeData[meCurrentProg] || '';
+  document.getElementById('meJudgeName').value = judgeName;
+  buildMeTable();
+}
+
+function buildMeTable() {
+  if (!meCurrentProg) return;
+  const prog = progs.find(p => p.id == meCurrentProg);
+  if (!prog) return;
+
+  // Get participants for this program (from parts list)
+  // Assign code letters if not already done
+  if (!meCodeMap[meCurrentProg]) {
+    meCodeMap[meCurrentProg] = {};
+    const shuffled = [...parts].sort(() => Math.random() - 0.5); // random shuffle for blind judging
+    shuffled.forEach((p, i) => {
+      meCodeMap[meCurrentProg][p.id] = CODE_LETTERS[i % CODE_LETTERS.length] + (i >= 26 ? Math.floor(i/26) : '');
+    });
+    sd('pr_me_codes', meCodeMap);
+  }
+
+  // Build entries from participants
+  meEntries = parts.map(p => {
+    // check if this participant already has scores in this program
+    let existingMark = '';
+    teams.forEach(t => {
+      getMProg(prog.id, t.id).forEach(m => {
+        if (m.name === p.name) existingMark = m.score;
+      });
+    });
+    const team = teams.find(t => t.id == p.group);
+    return {
+      chest: p.chest,
+      name: p.name,
+      partId: p.id,
+      teamId: p.group,
+      teamName: team ? team.name : '—',
+      code: meCodeMap[meCurrentProg][p.id] || '?',
+      mark: existingMark !== '' ? String(existingMark) : ''
+    };
+  });
+
+  // Check if result is published (has scores)
+  const hasScores = meEntries.some(e => e.mark !== '');
+  document.getElementById('mePublishedBadge').style.display = hasScores ? 'flex' : 'none';
+
+  meSortAndRender();
+  document.getElementById('meTableCard').style.display = 'block';
+  document.getElementById('meEmptyState').style.display = 'none';
+
+  // Update judge header
+  const judgeName = document.getElementById('meJudgeName').value.trim();
+  document.getElementById('meJudgeHeader').textContent = judgeName || 'MARKS';
+}
+
+function meSortBy(mode) {
+  meSortMode = mode;
+  meSortAndRender();
+}
+
+function meSortAndRender() {
+  const sorted = [...meEntries];
+  if (meSortMode === 'code') {
+    sorted.sort((a,b) => a.code.localeCompare(b.code));
+  } else {
+    sorted.sort((a,b) => {
+      const ma = parseFloat(a.mark) || -1;
+      const mb = parseFloat(b.mark) || -1;
+      return mb - ma;
+    });
+  }
+
+  const tbody = document.getElementById('meTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = sorted.map(e => `<tr>
+    <td style="font-family:'Inter','Manjari',sans-serif;font-weight:600;color:var(--accent)">${esc(e.chest)}</td>
+    <td>
+      <div style="background:var(--dark4);border-radius:8px;padding:5px 12px;font-family:'Montserrat','Manjari',sans-serif;font-size:1rem;font-weight:700;text-align:center;display:inline-block;min-width:38px;color:var(--accent)">${esc(e.code)}</div>
+    </td>
+    <td>
+      <div style="font-weight:600;font-size:.85rem">${esc(e.name)}</div>
+      <div style="font-size:.7rem;color:var(--muted)">${esc(e.teamName)}</div>
+    </td>
+    <td>
+      <input type="number" class="form-input" min="0" max="${progs.find(p=>p.id==meCurrentProg)?.maxScore||100}"
+        placeholder="—" value="${esc(e.mark)}"
+        style="max-width:90px;padding:6px 10px;text-align:center;font-weight:700;font-size:.95rem"
+        onchange="meSaveDraft('${e.partId}',this.value)"
+        oninput="meSaveDraft('${e.partId}',this.value)">
+    </td>
+  </tr>`).join('');
+
+  // Update sort button highlights
+  document.querySelectorAll('.me-sort-btn').forEach(b => b.classList.remove('btn-primary'));
+}
+
+function meSaveDraft(partId, val) {
+  const entry = meEntries.find(e => e.partId === partId);
+  if (entry) entry.mark = val;
+}
+
+function clearMeMarks() {
+  if (!confirm('All entered marks will be cleared. Continue?')) return;
+  meEntries.forEach(e => e.mark = '');
+  meSortAndRender();
+  showToast('Marks cleared');
+}
+
+function submitMeMarks() {
+  if (!meCurrentProg) return;
+  const prog = progs.find(p => p.id == meCurrentProg);
+  if (!prog) return;
+
+  // Save judge name
+  const judgeName = document.getElementById('meJudgeName').value.trim() || 'Judge';
+  meJudgeData[meCurrentProg] = judgeName;
+  sd('pr_me_judges', meJudgeData);
+  document.getElementById('meJudgeHeader').textContent = judgeName;
+
+  // Save marks to teams via getMProg pattern
+  let saved = 0;
+  meEntries.forEach(e => {
+    if (e.mark === '' || e.mark === null || e.mark === undefined) return;
+    const score = parseFloat(e.mark);
+    if (isNaN(score)) return;
+
+    // Find which team this participant belongs to
+    const teamId = e.teamId;
+    const team = teams.find(t => t.id == teamId);
+    if (!team) return;
+
+    // Update or add member score for this program
+    if (!team.members) team.members = [];
+    // Find existing entry for this prog
+    const progKey = String(prog.id);
+    let progMembers = team.members.filter(m => String(m.pid) !== progKey);
+    // Check if name already exists for this prog
+    const existingIdx = team.members.findIndex(m => String(m.pid) === progKey && m.name === e.name);
+    if (existingIdx >= 0) {
+      team.members[existingIdx].score = score;
+    } else {
+      team.members.push({pid: prog.id, name: e.name, score});
+    }
+    saved++;
+  });
+
+  sd('pr_teams', teams);
+  showToast(`${saved} marks submitted ✓`);
+  buildMeTable(); // refresh to show updated scores
+  renderMeDashStatus();
+}
+
+function renderMeDashStatus() {
+  const el = document.getElementById('dashMeStatus');
+  if (!el) return;
+  const withJudge = progs.filter(p => meJudgeData[p.id]);
+  if (!withJudge.length) { el.innerHTML = ''; return; }
+  el.innerHTML = withJudge.slice(0,6).map(p => `
+    <div onclick="showPage('markentry');setTimeout(()=>{document.getElementById('meProgSel').value='${p.id}';onMeProgChange();},100)"
+      style="background:var(--dark3);border:1px solid rgba(36,125,225,.15);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:.74rem">
+      <span style="color:var(--accent);font-weight:600">${esc(p.name)}</span>
+      <span style="color:var(--muted);margin-left:6px">${esc(meJudgeData[p.id])}</span>
+    </div>`).join('') + (withJudge.length > 6 ? `<div style="font-size:.7rem;color:var(--muted);padding:6px">+${withJudge.length-6} more</div>` : '');
 }
 
 // ═══ ANALYTICS ═══

@@ -279,7 +279,8 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
       <div class="nav-section">MAIN</div>
       <div class="nav-item active" onclick="showPage('dashboard')"><span class="ni">📊</span>Dashboard</div>
       <div class="nav-item" onclick="showPage('participants')"><span class="ni">🧑‍🤝‍🧑</span>Participants<span class="nbadge" id="nbPart">0</span></div>
-      <div class="nav-item" onclick="showPage('programs')"><span class="ni">🎯</span>Programs<span class="nbadge" id="nbProg">0</span></div>
+      <div class="nav-item" onclick="showPage('programs')"><span class="ni">🎯</span>Competition<span class="nbadge" id="nbProg">0</span></div>
+      <div class="nav-item" onclick="showPage('registration')"><span class="ni">📋</span>Registration<span class="nbadge" id="nbReg">0</span></div>
       <div class="nav-section">TEAMS</div>
       <div class="nav-item" onclick="showPage('teams')"><span class="ni">👥</span>Teams<span class="nbadge" id="nbTeams">0</span></div>
       <div class="nav-section">RESULTS</div>
@@ -317,7 +318,7 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
       </div>
       <div class="topbar-right">
         <div class="topbar-time" id="topbarTime"></div>
-        <button class="btn btn-gold btn-sm" onclick="showPage('results');calcResults()">🏆 Calculate</button>
+        <button class="btn btn-outline btn-sm" onclick="showPage('results')" style="white-space:nowrap">View Results →</button>
       </div>
     </div>
 
@@ -362,7 +363,7 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
             </div>
             <div style="background:var(--dark3);border-radius:12px;padding:14px;border:1px solid rgba(255,165,0,.15)">
               <div style="font-size:1.4rem;margin-bottom:6px">🎯</div>
-              <div style="font-family:'Montserrat','Manjari',sans-serif;font-size:.9rem;letter-spacing:1px;color:var(--gold);margin-bottom:5px">2. PROGRAMS</div>
+              <div style="font-family:'Montserrat','Manjari',sans-serif;font-size:.9rem;letter-spacing:1px;color:var(--gold);margin-bottom:5px">2. COMPETITION</div>
               <div style="font-size:.78rem;color:var(--muted);line-height:1.6">Programs section-ൽ ആദ്യം "+ Category" ക്ലിക്ക് ചെയ്ത് Arts, Sports തുടങ്ങിയ categories ഉണ്ടാക്കുക. പിന്നെ "+ Program" ക്ലിക്ക് ചെയ്ത് programs ചേർക്കുക.</div>
             </div>
             <div style="background:var(--dark3);border-radius:12px;padding:14px;border:1px solid rgba(0,229,122,.15)">
@@ -418,10 +419,30 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
         </div>
       </div>
 
+      <!-- ── REGISTRATION ── -->
+      <div class="page" id="page-registration">
+        <div class="prog-header">
+          <h2>📋 REGISTRATION</h2>
+          <button class="btn btn-primary btn-sm" onclick="openRegModal()">+ Register</button>
+        </div>
+        <div class="card" style="margin-bottom:14px">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <input class="form-input" id="regSearch" placeholder="🔍 Search by name or chest no..." style="max-width:260px;padding:8px 12px" oninput="renderRegistrations()">
+            <select class="form-input" id="regFilterProg" onchange="renderRegistrations()" style="max-width:200px;padding:8px 12px">
+              <option value="all">All Competitions</option>
+            </select>
+            <select class="form-input" id="regFilterTeam" onchange="renderRegistrations()" style="max-width:180px;padding:8px 12px">
+              <option value="all">All Teams</option>
+            </select>
+          </div>
+        </div>
+        <div class="card"><div id="regTableWrap"></div></div>
+      </div>
+
       <!-- ── PROGRAMS ── -->
       <div class="page" id="page-programs">
         <div class="prog-header">
-          <h2>🎯 PROGRAMS</h2>
+          <h2>🎯 COMPETITION</h2>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <button class="btn btn-outline btn-sm" onclick="openCatModal()">+ Category</button>
             <button class="btn btn-primary" onclick="openProgModal()">+ Program</button>
@@ -448,7 +469,6 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
             <select class="form-input btn-sm" id="resProgFilter" onchange="calcResults()" style="min-width:150px;padding:6px 11px">
               <option value="all">All Programs</option>
             </select>
-            <button class="btn btn-gold btn-sm" onclick="calcResults()">🔄 Calculate</button>
             <button class="btn btn-outline btn-sm" onclick="printResults()" title="Print / Save PDF">🖨️ Print</button>
             <button class="btn btn-outline btn-sm" onclick="downloadResultsPDF()" title="Save as PDF" style="border-color:rgba(0,229,122,.3);color:var(--green)">⬇️ Save PDF</button>
           </div>
@@ -1030,6 +1050,36 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
   </div>
 </div>
 
+<!-- REGISTRATION MODAL -->
+<div class="modal-overlay" id="regModal">
+  <div class="modal-box" style="max-width:440px">
+    <button class="modal-close" onclick="closeModal('regModal')">✕</button>
+    <div class="modal-title" id="regModalTitle">+ REGISTER PARTICIPANT</div>
+    <div class="form-field">
+      <label>PARTICIPANT (Chest No.)</label>
+      <select class="form-input" id="regPartSel">
+        <option value="">— Select Participant —</option>
+      </select>
+    </div>
+    <div class="form-field">
+      <label>COMPETITION</label>
+      <select class="form-input" id="regProgSel">
+        <option value="">— Select Competition —</option>
+      </select>
+    </div>
+    <div class="form-field">
+      <label>TEAM</label>
+      <select class="form-input" id="regTeamSel">
+        <option value="">— Select Team —</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('regModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveReg()">Register</button>
+    </div>
+  </div>
+</div>
+
 <!-- PARTICIPANT -->
 <div class="modal-overlay" id="partModal">
   <div class="modal-box" style="max-width:420px">
@@ -1081,11 +1131,15 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
     <div class="modal-title" id="progModalTitle">+ ADD PROGRAM</div>
     <div class="form-field"><label>PROGRAM NAME</label><input class="form-input" id="progName" placeholder="e.g. Solo Dance, Quiz, Drawing..."></div>
     <div class="form-field"><label>CATEGORY</label><select class="form-input" id="progCat"></select></div>
-    <div class="form-field"><label>MAX SCORE (per participant)</label><input class="form-input" type="number" id="progMax" value="100" min="1" placeholder="100"></div>
-    <div class="form-field"><label>DESCRIPTION (optional)</label><input class="form-input" id="progDesc" placeholder="Brief description..."></div>
-    <div class="form-field"><label>VENUE / STAGE (optional)</label>
+    <div class="form-field"><label>TYPE</label>
+      <select class="form-input" id="progType">
+        <option value="individual">Individual</option>
+        <option value="group">Group</option>
+      </select>
+    </div>
+    <div class="form-field"><label>STAGE / VENUE (optional)</label>
       <select class="form-input" id="progVenue">
-        <option value="">— Select Venue —</option>
+        <option value="">— Select Stage —</option>
         <option value="Main Stage">Main Stage</option>
         <option value="Auditorium">Auditorium</option>
         <option value="Hall A">Hall A</option>
@@ -1095,6 +1149,9 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
         <option value="Classroom 2">Classroom 2</option>
       </select>
     </div>
+    <div class="form-field"><label>GROUP / SECTION (optional)</label><input class="form-input" id="progGroup" placeholder="e.g. Junior, Senior, Sub-Junior..."></div>
+    <div class="form-field"><label>MAX SCORE (per participant)</label><input class="form-input" type="number" id="progMax" value="100" min="1" placeholder="100"></div>
+    <div class="form-field"><label>DESCRIPTION (optional)</label><input class="form-input" id="progDesc" placeholder="Brief description..."></div>
     <div class="modal-actions">
       <button class="btn btn-outline" onclick="closeModal('progModal')">Cancel</button>
       <button class="btn btn-primary" onclick="saveProgram()">Save</button>
@@ -1279,6 +1336,7 @@ function reloadAllData(){
   if (typeof homeData !== 'undefined') homeData = ld('pr_home', homeData);
   if (typeof attendance !== 'undefined') attendance = ld('pr_attendance', attendance);
   meJudgeData = ld('pr_me_judges', meJudgeData||{});
+  regs = ld('pr_regs', regs||[]);
 }
 function refreshAllViews(){
   reloadAllData();
@@ -1356,7 +1414,7 @@ function showPage(pg){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const pel=document.getElementById('page-'+pg);
   if(pel) pel.classList.add('active');
-  const T={dashboard:'DASHBOARD',participants:'PARTICIPANTS',programs:'PROGRAMS',teams:'TEAMS',results:'RESULTS',liveresults:'LIVE RESULTS',home:'HOME PAGE',announcements:'ANNOUNCEMENTS',leaderboard:'LEADERBOARD',gallery:'GALLERY',publish:'PUBLISH',templates:'TEMPLATES',qrcards:'QR CARDS',attendance:'ATTENDANCE',awards:'AWARDS',markentry:'MARK ENTRY',analytics:'ANALYTICS',history:'HISTORY',settings:'SETTINGS'};
+  const T={dashboard:'DASHBOARD',participants:'PARTICIPANTS',programs:'COMPETITION',registration:'REGISTRATION',teams:'TEAMS',results:'RESULTS',liveresults:'LIVE RESULTS',home:'HOME PAGE',announcements:'ANNOUNCEMENTS',leaderboard:'LEADERBOARD',gallery:'GALLERY',publish:'PUBLISH',templates:'TEMPLATES',qrcards:'QR CARDS',attendance:'ATTENDANCE',awards:'AWARDS',markentry:'MARK ENTRY',analytics:'ANALYTICS',history:'HISTORY',settings:'SETTINGS'};
   document.getElementById('topbarTitle').textContent=T[pg]||pg.toUpperCase();
   document.querySelectorAll('.nav-item').forEach(n=>{if(n.textContent.toLowerCase().includes(pg.toLowerCase().slice(0,4)))n.classList.add('active')});
   document.getElementById('sidebar')?.classList.remove('open');
@@ -1373,6 +1431,7 @@ function showPage(pg){
   if(pg==='gallery') renderGallery();
   if(pg==='home') renderHomePage();
   if(pg==='publish') renderPublishPage();
+  if(pg==='registration') renderRegistrations();
   if(pg==='qrcards') renderQRCards();
   if(pg==='attendance'){switchAttTab('scan');}
   if(pg==='awards') calcAwards();
@@ -1396,7 +1455,7 @@ function renderDash(){
   const totPts=teams.reduce((s,t)=>s+teamTotal(t),0);
   const totMem=teams.reduce((s,t)=>s+t.members.length,0);
   document.getElementById('dashStats').innerHTML=`
-    <div class="dstat" style="--ac:linear-gradient(90deg,var(--accent),#5BA3EE)"><div class="ds-icon">🎯</div><div class="ds-val">${progs.length}</div><div class="ds-lbl">PROGRAMS</div><div class="ds-sub">${cats.length} categories</div></div>
+    <div class="dstat" style="--ac:linear-gradient(90deg,var(--accent),#5BA3EE)"><div class="ds-icon">🎯</div><div class="ds-val">${progs.length}</div><div class="ds-lbl">COMPETITION</div><div class="ds-sub">${cats.length} categories</div></div>
     <div class="dstat" style="--ac:linear-gradient(90deg,var(--red),#FF8FA3)"><div class="ds-icon">👥</div><div class="ds-val">10</div><div class="ds-lbl">TEAMS</div><div class="ds-sub">${totMem} members</div></div>
     <div class="dstat" style="--ac:linear-gradient(90deg,var(--green),#7DFFB8)"><div class="ds-icon">⭐</div><div class="ds-val">${totPts}</div><div class="ds-lbl">TOTAL POINTS</div><div class="ds-sub">All programs</div></div>
     <div class="dstat" style="--ac:linear-gradient(90deg,var(--gold),var(--gold2))"><div class="ds-icon">🏆</div><div class="ds-val">${hist.length}</div><div class="ds-lbl">SESSIONS</div><div class="ds-sub">Calculated</div></div>`;
@@ -1431,7 +1490,112 @@ function renderDash(){
   if(document.getElementById('nbPart')) document.getElementById('nbPart').textContent=parts.length;
   if(document.getElementById('nbTeams')) document.getElementById('nbTeams').textContent=teams.length;
   if(document.getElementById('nbAnn')) document.getElementById('nbAnn').textContent=anns.length;
+  if(document.getElementById('nbReg')) document.getElementById('nbReg').textContent=(typeof regs!=='undefined'?regs.length:0);
   if(typeof renderMeDashStatus==='function') renderMeDashStatus();
+}
+
+// ═══ REGISTRATION ═══
+let regs = ld('pr_regs', []); // [{id, partId, progId, teamId, time}]
+
+function openRegModal(rid) {
+  const r = rid ? regs.find(x=>x.id===rid) : null;
+  document.getElementById('regModalTitle').textContent = rid ? 'EDIT REGISTRATION' : '+ REGISTER PARTICIPANT';
+  // populate dropdowns
+  const pSel = document.getElementById('regPartSel');
+  pSel.innerHTML = '<option value="">— Select Participant —</option>' +
+    parts.map(p=>`<option value="${p.id}" ${r&&r.partId===p.id?'selected':''}>${esc(p.name)} (#${esc(p.chest)})</option>`).join('');
+  const prSel = document.getElementById('regProgSel');
+  prSel.innerHTML = '<option value="">— Select Competition —</option>' +
+    progs.map(p=>{const cat=cats.find(c=>c.id===p.catId);return`<option value="${p.id}" ${r&&r.progId==p.id?'selected':''}>${esc(p.name)}${cat?' — '+esc(cat.name):''}${p.type?' ('+p.type+')':''}</option>`}).join('');
+  const tSel = document.getElementById('regTeamSel');
+  tSel.innerHTML = '<option value="">— Select Team —</option>' +
+    teams.map(t=>`<option value="${t.id}" ${r&&r.teamId==t.id?'selected':''}>${esc(t.name)}</option>`).join('');
+  openModal('regModal');
+}
+function saveReg() {
+  const partId = document.getElementById('regPartSel').value;
+  const progId = document.getElementById('regProgSel').value;
+  const teamId = document.getElementById('regTeamSel').value;
+  if (!partId) return showToast('Select a participant!', true);
+  if (!progId) return showToast('Select a competition!', true);
+  if (!teamId) return showToast('Select a team!', true);
+  // check duplicate
+  if (regs.find(r => r.partId===partId && r.progId==progId)) return showToast('Already registered for this competition!', true);
+  regs.push({id:'r'+Date.now(), partId, progId, teamId, time:Date.now()});
+  sd('pr_regs', regs);
+  updateRegBadge();
+  closeModal('regModal');
+  renderRegistrations();
+  showToast('Registered ✓');
+}
+function delReg(rid) {
+  if (!confirm('Remove this registration?')) return;
+  regs = regs.filter(r=>r.id!==rid);
+  sd('pr_regs', regs);
+  updateRegBadge();
+  renderRegistrations();
+  showToast('Removed');
+}
+function updateRegBadge() {
+  const el = document.getElementById('nbReg');
+  if (el) el.textContent = regs.length;
+}
+function renderRegistrations() {
+  updateRegBadge();
+  // populate filters
+  const fp = document.getElementById('regFilterProg');
+  if (fp) {
+    const cv = fp.value;
+    fp.innerHTML = '<option value="all">All Competitions</option>' + progs.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
+    if (cv) fp.value = cv;
+  }
+  const ft = document.getElementById('regFilterTeam');
+  if (ft) {
+    const cv = ft.value;
+    ft.innerHTML = '<option value="all">All Teams</option>' + teams.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('');
+    if (cv) ft.value = cv;
+  }
+  const search = (document.getElementById('regSearch')?.value||'').toLowerCase();
+  const fProg = document.getElementById('regFilterProg')?.value||'all';
+  const fTeam = document.getElementById('regFilterTeam')?.value||'all';
+
+  let list = regs.filter(r => {
+    const part = parts.find(p=>p.id===r.partId);
+    const matchSearch = !search || (part && (part.name.toLowerCase().includes(search)||part.chest.toLowerCase().includes(search)));
+    const matchProg = fProg==='all' || r.progId==fProg;
+    const matchTeam = fTeam==='all' || r.teamId==fTeam;
+    return matchSearch && matchProg && matchTeam;
+  });
+
+  const wrap = document.getElementById('regTableWrap');
+  if (!wrap) return;
+  if (!list.length) {
+    wrap.innerHTML = `<div class="empty-state"><div class="ei">📋</div><p>${regs.length?'No matching registrations.':'No registrations yet. "+ Register" click ചെയ്ത് add ചെയ്യുക.'}</p></div>`;
+    return;
+  }
+  wrap.innerHTML = `<div style="overflow-x:auto"><table class="lb-table" style="width:100%">
+    <thead><tr><th>#</th><th>PARTICIPANT</th><th>COMPETITION</th><th>TEAM</th><th></th></tr></thead>
+    <tbody>${list.map((r,i)=>{
+      const part = parts.find(p=>p.id===r.partId);
+      const prog = progs.find(p=>p.id==r.progId);
+      const team = teams.find(t=>t.id==r.teamId);
+      const cat = prog ? cats.find(c=>c.id===prog.catId) : null;
+      return `<tr>
+        <td style="color:var(--muted);font-size:.76rem">${i+1}</td>
+        <td>
+          <div style="font-weight:600">${part?esc(part.name):'Unknown'}</div>
+          <div style="font-size:.7rem;color:var(--muted)">#${part?esc(part.chest):'—'}</div>
+        </td>
+        <td>
+          <div style="font-weight:600;font-size:.85rem">${prog?esc(prog.name):'—'}</div>
+          <div style="font-size:.7rem;color:var(--muted)">${cat?esc(cat.name):''}${prog&&prog.type?' · '+prog.type:''}</div>
+        </td>
+        <td style="font-size:.84rem;color:var(--accent);font-weight:600">${team?esc(team.name):'—'}</td>
+        <td><button class="btn btn-red btn-xs" onclick="delReg('${r.id}')">✕</button></td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table></div>
+  <div style="font-size:.72rem;color:var(--muted);margin-top:8px">${list.length} of ${regs.length} registrations shown</div>`;
 }
 
 // ═══ PARTICIPANTS ═══
@@ -1646,8 +1810,10 @@ function renderProgs(){
       </div>
       ${p.desc?`<div style="color:var(--muted);font-size:.76rem;margin-bottom:7px">${esc(p.desc)}</div>`:''}
       <div style="color:var(--muted);font-size:.75rem;margin-bottom:9px;display:flex;gap:10px;flex-wrap:wrap">
-        <span>Max: ${p.maxScore} pts</span><span>${totalScored}/10 teams scored</span>
-        ${p.venue?`<span style="color:var(--accent)">📍 ${esc(p.venue)}</span>`:''}
+        <span style="background:var(--dark4);padding:2px 7px;border-radius:5px;color:var(--accent);font-weight:600">${p.type==='group'?'Group':'Individual'}</span>
+        ${p.group?`<span style="background:var(--dark4);padding:2px 7px;border-radius:5px">${esc(p.group)}</span>`:''}
+        ${p.venue?`<span>📍 ${esc(p.venue)}</span>`:''}
+        <span>Max: ${p.maxScore} pts</span>
       </div>
       <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px">
         ${teams.map((t,ti)=>{const ms=getMProg(p.id,t.id);const tot=ms.reduce((s,m)=>s+m.score,0);
@@ -1680,6 +1846,8 @@ function openProgModal(pid){
   document.getElementById('progMax').value=p?p.maxScore:100;
   document.getElementById('progDesc').value=p?p.desc:'';
   document.getElementById('progVenue').value=p?(p.venue||''):'';
+  document.getElementById('progType').value=p?(p.type||'individual'):'individual';
+  document.getElementById('progGroup').value=p?(p.group||''):'';
   const sel=document.getElementById('progCat');
   sel.innerHTML=cats.length?cats.map(c=>`<option value="${c.id}" ${p&&p.catId===c.id?'selected':''}>${c.emoji} ${esc(c.name)}</option>`).join(''):`<option value="">Add a category first</option>`;
   openModal('progModal');
@@ -1691,8 +1859,10 @@ function saveProgram(){
   const maxScore=parseInt(document.getElementById('progMax').value)||100;
   const desc=document.getElementById('progDesc').value.trim();
   const venue=document.getElementById('progVenue').value;
-  if(editProgId){progs=progs.map(p=>p.id===editProgId?{...p,name,catId,maxScore,desc,venue}:p);showToast('Updated ✓')}
-  else{progs.push({id:Date.now(),name,catId,maxScore,desc,venue});showToast('Program added ✓')}
+  const type=document.getElementById('progType').value;
+  const group=document.getElementById('progGroup').value.trim();
+  if(editProgId){progs=progs.map(p=>p.id===editProgId?{...p,name,catId,maxScore,desc,venue,type,group}:p);showToast('Updated ✓')}
+  else{progs.push({id:Date.now(),name,catId,maxScore,desc,venue,type,group});showToast('Competition added ✓')}
   sd('pr_progs',progs);closeModal('progModal');renderProgs();editProgId=null;
 }
 function delProg(pid){
@@ -1784,10 +1954,13 @@ function renderTeams(){
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
         <div class="bg${i}" style="width:34px;height:34px;border-radius:9px;flex-shrink:0"></div>
         <div style="flex:1;display:flex;align-items:center;gap:6px">
-          <input class="form-input" style="padding:6px 10px;font-size:.88rem;margin-bottom:0;background:var(--dark5);border-color:transparent;flex:1"
-            value="${esc(t.name)}" id="tn_${i}" onchange="updateTName(${i},this.value)" placeholder="Team name">
-          <button class="btn btn-red btn-xs" style="margin-left:6px;flex-shrink:0" onclick="deleteTeam('${t.id}')">✕</button>
-          <div style="font-family:'Inter','Manjari',sans-serif;font-size:.68rem;color:var(--muted);margin-top:3px">${allMem.length} members · <span style="color:var(--gold)">${total} pts</span></div>
+          <div style="flex:1">
+            <input class="form-input" style="padding:6px 10px;font-size:.88rem;margin-bottom:4px;background:var(--dark5);border-color:transparent"
+              value="${esc(t.name)}" id="tn_${i}" onchange="updateTName(${i},this.value)" placeholder="Team name">
+            <input class="form-input" style="padding:5px 10px;font-size:.78rem;margin-bottom:0;background:var(--dark5);border-color:transparent;color:var(--muted)"
+              value="${esc(t.manager||'')}" id="tm_${i}" onchange="updateTManager(${i},this.value)" placeholder="Manager name (optional)">
+          </div>
+          <button class="btn btn-red btn-xs" style="margin-left:6px;flex-shrink:0;align-self:flex-start" onclick="deleteTeam('${t.id}')">✕</button>
         </div>
       </div>
       ${allMem.length?`
@@ -1812,6 +1985,7 @@ function renderTeams(){
   }).join('');
 }
 function updateTName(i,v){if(!v.trim()) return;teams[i].name=v.trim();sd('pr_teams',teams)}
+function updateTManager(i,v){teams[i].manager=v.trim();sd('pr_teams',teams)}
 function addTeam(){
   const idx=teams.length;
   teams.push({id:'t_'+Date.now(),name:'Team '+(idx+1),members:[]});

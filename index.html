@@ -1523,6 +1523,16 @@ function saveReg() {
   if (regs.find(r => r.partId===partId && r.progId==progId)) return showToast('Already registered for this competition!', true);
   regs.push({id:'r'+Date.now(), partId, progId, teamId, time:Date.now()});
   sd('pr_regs', regs);
+  // Add to parts list if not already there
+  if (!parts.find(p => p.id === partId)) {
+    const allParts = ld('pr_parts', []);
+    const found = allParts.find(p => p.id === partId);
+    if (found) { parts = allParts; sd('pr_parts', parts); }
+  }
+  // Update participant's team assignment
+  const pIdx = parts.findIndex(p => p.id === partId);
+  if (pIdx >= 0 && teamId) { parts[pIdx].group = teamId; sd('pr_parts', parts); }
+  if (document.getElementById('nbPart')) document.getElementById('nbPart').textContent = parts.length;
   updateRegBadge();
   closeModal('regModal');
   renderRegistrations();
@@ -1530,8 +1540,20 @@ function saveReg() {
 }
 function delReg(rid) {
   if (!confirm('Remove this registration?')) return;
-  regs = regs.filter(r=>r.id!==rid);
+  const reg = regs.find(r => r.id === rid);
+  regs = regs.filter(r => r.id !== rid);
   sd('pr_regs', regs);
+
+  // If this participant has no more registrations, remove from parts list too
+  if (reg) {
+    const stillRegistered = regs.some(r => r.partId === reg.partId);
+    if (!stillRegistered) {
+      parts = parts.filter(p => p.id !== reg.partId);
+      sd('pr_parts', parts);
+      if (document.getElementById('nbPart')) document.getElementById('nbPart').textContent = parts.length;
+    }
+  }
+
   updateRegBadge();
   renderRegistrations();
   showToast('Removed');

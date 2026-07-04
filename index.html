@@ -1056,9 +1056,17 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
     <button class="modal-close" onclick="closeModal('regModal')">✕</button>
     <div class="modal-title" id="regModalTitle">+ REGISTER PARTICIPANT</div>
     <div class="form-field">
-      <label>PARTICIPANT (Chest No.)</label>
-      <select class="form-input" id="regPartSel">
-        <option value="">— Select Participant —</option>
+      <label>FULL NAME</label>
+      <input class="form-input" id="regName" placeholder="Participant name...">
+    </div>
+    <div class="form-field">
+      <label>CHEST NUMBER</label>
+      <input class="form-input" id="regChest" placeholder="e.g. 101">
+    </div>
+    <div class="form-field">
+      <label>CATEGORY</label>
+      <select class="form-input" id="regCatSel">
+        <option value="">— Select Category —</option>
       </select>
     </div>
     <div class="form-field">
@@ -1497,41 +1505,54 @@ function renderDash(){
 // ═══ REGISTRATION ═══
 let regs = ld('pr_regs', []); // [{id, partId, progId, teamId, time}]
 
-function openRegModal(rid) {
-  const r = rid ? regs.find(x=>x.id===rid) : null;
-  document.getElementById('regModalTitle').textContent = rid ? 'EDIT REGISTRATION' : '+ REGISTER PARTICIPANT';
-  // populate dropdowns
-  const pSel = document.getElementById('regPartSel');
-  pSel.innerHTML = '<option value="">— Select Participant —</option>' +
-    parts.map(p=>`<option value="${p.id}" ${r&&r.partId===p.id?'selected':''}>${esc(p.name)} (#${esc(p.chest)})</option>`).join('');
+function openRegModal() {
+  document.getElementById('regModalTitle').textContent = '+ REGISTER PARTICIPANT';
+  document.getElementById('regName').value = '';
+  document.getElementById('regChest').value = '';
+  // populate category dropdown
+  const cSel = document.getElementById('regCatSel');
+  cSel.innerHTML = '<option value="">— Select Category —</option>' +
+    cats.map(c=>`<option value="${c.id}">${c.emoji} ${esc(c.name)}</option>`).join('');
+  // populate competition dropdown
   const prSel = document.getElementById('regProgSel');
   prSel.innerHTML = '<option value="">— Select Competition —</option>' +
-    progs.map(p=>{const cat=cats.find(c=>c.id===p.catId);return`<option value="${p.id}" ${r&&r.progId==p.id?'selected':''}>${esc(p.name)}${cat?' — '+esc(cat.name):''}${p.type?' ('+p.type+')':''}</option>`}).join('');
+    progs.map(p=>{const cat=cats.find(c=>c.id===p.catId);return`<option value="${p.id}">${esc(p.name)}${cat?' — '+esc(cat.name):''}${p.type?' ('+p.type+')':''}</option>`}).join('');
+  // populate team dropdown
   const tSel = document.getElementById('regTeamSel');
   tSel.innerHTML = '<option value="">— Select Team —</option>' +
-    teams.map(t=>`<option value="${t.id}" ${r&&r.teamId==t.id?'selected':''}>${esc(t.name)}</option>`).join('');
+    teams.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('');
   openModal('regModal');
 }
 function saveReg() {
-  const partId = document.getElementById('regPartSel').value;
+  const name = document.getElementById('regName').value.trim();
+  const chest = document.getElementById('regChest').value.trim();
+  const catId = document.getElementById('regCatSel').value;
   const progId = document.getElementById('regProgSel').value;
   const teamId = document.getElementById('regTeamSel').value;
-  if (!partId) return showToast('Select a participant!', true);
+  if (!name) return showToast('Name required!', true);
+  if (!chest) return showToast('Chest number required!', true);
   if (!progId) return showToast('Select a competition!', true);
   if (!teamId) return showToast('Select a team!', true);
-  // check duplicate
-  if (regs.find(r => r.partId===partId && r.progId==progId)) return showToast('Already registered for this competition!', true);
-  regs.push({id:'r'+Date.now(), partId, progId, teamId, time:Date.now()});
-  sd('pr_regs', regs);
-  // Add to parts list if not already there
-  if (!parts.find(p => p.id === partId)) {
-    const allParts = ld('pr_parts', []);
-    const found = allParts.find(p => p.id === partId);
-    if (found) { parts = allParts; sd('pr_parts', parts); }
+
+  // Find or create participant
+  let part = parts.find(p => p.chest === chest);
+  if (!part) {
+    part = {id: 'p'+Date.now(), name, chest, catId: catId||null, group: teamId};
+    parts.push(part);
+    sd('pr_parts', parts);
+  } else {
+    // Update team if changed
+    part.group = teamId;
+    if (catId) part.catId = catId;
+    sd('pr_parts', parts);
   }
-  // Update participant's team assignment
-  const pIdx = parts.findIndex(p => p.id === partId);
-  if (pIdx >= 0 && teamId) { parts[pIdx].group = teamId; sd('pr_parts', parts); }
+
+  // Check duplicate registration
+  if (regs.find(r => r.partId===part.id && r.progId==progId)) return showToast('Already registered for this competition!', true);
+
+  regs.push({id:'r'+Date.now(), partId: part.id, progId, teamId, time:Date.now()});
+  sd('pr_regs', regs);
+
   if (document.getElementById('nbPart')) document.getElementById('nbPart').textContent = parts.length;
   updateRegBadge();
   closeModal('regModal');

@@ -401,7 +401,7 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
       <div class="page" id="page-participants">
         <div class="prog-header">
           <h2>🧑‍🤝‍🧑 PARTICIPANTS</h2>
-          <button class="btn btn-primary" onclick="openPartModal()">+ Add Participant</button>
+          <div style="font-size:.75rem;color:var(--muted);font-family:'Inter','Manjari',sans-serif">Registration ൽ ചേർക്കുക</div>
         </div>
         <div class="card" style="margin-bottom:14px">
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
@@ -1662,10 +1662,10 @@ function renderParticipants(){
   });
   const wrap=document.getElementById('partTableWrap');
   if(!wrap) return;
-  if(!list.length){wrap.innerHTML=`<div class="empty-state"><div class="ei">🧑‍🤝‍🧑</div><p>${parts.length?'No matching participants.':'No participants yet. "+ Add Participant" ക്ലിക്ക് ചെയ്ത് ചേർക്കുക.'}</p></div>`;return}
+  if(!list.length){wrap.innerHTML=`<div class="empty-state"><div class="ei">🧑‍🤝‍🧑</div><p>${parts.length?'No matching participants.':'No participants yet. Registration section-ൽ add ചെയ്യുക.'}</p></div>`;return}
   wrap.innerHTML=`<div style="overflow-x:auto"><table class="lb-table" style="width:100%">
     <thead><tr>
-      <th>#</th><th>NAME</th><th>CHEST NO.</th><th>CATEGORY</th><th>TEAM</th><th></th>
+      <th>#</th><th>NAME</th><th>CHEST NO.</th><th>CATEGORY</th><th>TEAM</th>
     </tr></thead><tbody>
     ${list.map((p,i)=>{
       const cat=cats.find(c=>c.id===p.catId);
@@ -1673,17 +1673,13 @@ function renderParticipants(){
       return `<tr>
         <td style="color:var(--muted);font-size:.76rem">${i+1}</td>
         <td style="font-weight:600">${esc(p.name)}</td>
-        <td style="font-family:'Inter','Manjari',sans-serif;color:var(--gold)">${esc(p.chest)}</td>
+        <td style="font-family:'Inter','Manjari',sans-serif;color:var(--accent);font-weight:600">${esc(p.chest)}</td>
         <td>${cat?`<span class="mem-cat-tag tc${cat.color} bg${cat.color}">${cat.emoji} ${esc(cat.name)}</span>`:'<span style="color:var(--muted)">—</span>'}</td>
-        <td style="font-family:'Inter','Manjari',sans-serif;font-size:.76rem;color:var(--accent)">${team?esc(team.name):'—'}</td>
-        <td style="display:flex;gap:5px;padding:6px 10px">
-          <button class="btn btn-outline btn-xs" onclick="openPartModal('${p.id}')">✏️</button>
-          <button class="btn btn-red btn-xs" onclick="delPart('${p.id}')">🗑</button>
-        </td>
+        <td style="font-family:'Inter','Manjari',sans-serif;font-size:.82rem;font-weight:600">${team?esc(team.name):'—'}</td>
       </tr>`;
     }).join('')}
     </tbody></table></div>
-    <div style="font-size:.72rem;color:var(--muted);font-family:'Inter','Manjari',sans-serif;margin-top:10px;padding:0 4px">${list.length} of ${parts.length} participants shown</div>`;
+    <div style="font-size:.72rem;color:var(--muted);font-family:'Inter','Manjari',sans-serif;margin-top:10px;padding:0 4px">${list.length} of ${parts.length} participants</div>`;
 }
 
 // ═══ PRINT / DOWNLOAD ═══

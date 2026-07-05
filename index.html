@@ -280,6 +280,7 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
       <div class="nav-item active" onclick="showPage('dashboard')"><span class="ni">📊</span>Dashboard</div>
       <div class="nav-item" onclick="showPage('programs')"><span class="ni">🎯</span>Competition<span class="nbadge" id="nbProg">0</span></div>
       <div class="nav-item" onclick="showPage('registration')"><span class="ni">📋</span>Registration<span class="nbadge" id="nbReg">0</span></div>
+      <div class="nav-item" onclick="showPage('participants')"><span class="ni">🧑‍🤝‍🧑</span>Participants<span class="nbadge" id="nbPart">0</span></div>
       <div class="nav-section">TEAMS</div>
       <div class="nav-item" onclick="showPage('teams')"><span class="ni">👥</span>Teams<span class="nbadge" id="nbTeams">0</span></div>
       <div class="nav-section">RESULTS</div>
@@ -397,6 +398,22 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
       </div>
 
       <!-- ── PARTICIPANTS ── -->
+      <!-- ── PARTICIPANTS ── -->
+      <div class="page" id="page-participants">
+        <div class="prog-header">
+          <h2>🧑‍🤝‍🧑 PARTICIPANTS</h2>
+        </div>
+        <div class="card" style="margin-bottom:14px">
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <input class="form-input" id="partSearch" placeholder="🔍 Name or chest no..." style="max-width:260px;padding:8px 12px" oninput="renderParticipants()">
+            <select class="form-input" id="partFilterGroup" onchange="renderParticipants()" style="max-width:180px;padding:8px 12px">
+              <option value="all">All Teams</option>
+            </select>
+          </div>
+        </div>
+        <div class="card"><div id="partTableWrap"></div></div>
+      </div>
+
       <!-- ── REGISTRATION ── -->
       <div class="page" id="page-registration">
         <div class="prog-header">
@@ -1429,7 +1446,7 @@ function showPage(pg){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const pel=document.getElementById('page-'+pg);
   if(pel) pel.classList.add('active');
-  const T={dashboard:'DASHBOARD',programs:'COMPETITION',registration:'REGISTRATION',teams:'TEAMS',results:'RESULTS',liveresults:'LIVE RESULTS',home:'HOME PAGE',announcements:'ANNOUNCEMENTS',leaderboard:'LEADERBOARD',gallery:'GALLERY',publish:'PUBLISH',templates:'TEMPLATES',qrcards:'QR CARDS',attendance:'ATTENDANCE',awards:'AWARDS',markentry:'MARK ENTRY',analytics:'ANALYTICS',history:'HISTORY',settings:'SETTINGS'};
+  const T={dashboard:'DASHBOARD',programs:'COMPETITION',registration:'REGISTRATION',participants:'PARTICIPANTS',teams:'TEAMS',results:'RESULTS',liveresults:'LIVE RESULTS',home:'HOME PAGE',announcements:'ANNOUNCEMENTS',leaderboard:'LEADERBOARD',gallery:'GALLERY',publish:'PUBLISH',templates:'TEMPLATES',qrcards:'QR CARDS',attendance:'ATTENDANCE',awards:'AWARDS',markentry:'MARK ENTRY',analytics:'ANALYTICS',history:'HISTORY',settings:'SETTINGS'};
   document.getElementById('topbarTitle').textContent=T[pg]||pg.toUpperCase();
   document.querySelectorAll('.nav-item').forEach(n=>{if(n.textContent.toLowerCase().includes(pg.toLowerCase().slice(0,4)))n.classList.add('active')});
   document.getElementById('sidebar')?.classList.remove('open');
@@ -1446,6 +1463,7 @@ function showPage(pg){
   if(pg==='home') renderHomePage();
   if(pg==='publish') renderPublishPage();
   if(pg==='registration') renderRegistrations();
+  if(pg==='participants') renderParticipants();
   if(pg==='qrcards') renderQRCards();
   if(pg==='attendance'){switchAttTab('scan');}
   if(pg==='awards') calcAwards();
@@ -1506,6 +1524,62 @@ function renderDash(){
   if(document.getElementById('nbAnn')) document.getElementById('nbAnn').textContent=anns.length;
   if(document.getElementById('nbReg')) document.getElementById('nbReg').textContent=(typeof regs!=='undefined'?regs.length:0);
   if(typeof renderMeDashStatus==='function') renderMeDashStatus();
+}
+
+// ═══ PARTICIPANTS (read-only) ═══
+function renderParticipants() {
+  // update team filter
+  const grpSel = document.getElementById('partFilterGroup');
+  if (grpSel) {
+    const cur = grpSel.value;
+    grpSel.innerHTML = '<option value="all">All Teams</option>' +
+      teams.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('');
+    if (cur) grpSel.value = cur;
+  }
+  // update badge
+  if (document.getElementById('nbPart')) document.getElementById('nbPart').textContent = parts.length;
+
+  const search = (document.getElementById('partSearch')?.value || '').toLowerCase();
+  const fTeam = document.getElementById('partFilterGroup')?.value || 'all';
+
+  let list = parts.filter(p => {
+    const matchSearch = !search || p.name.toLowerCase().includes(search) || p.chest.toLowerCase().includes(search);
+    const matchTeam = fTeam === 'all' || p.group == fTeam;
+    return matchSearch && matchTeam;
+  });
+
+  const wrap = document.getElementById('partTableWrap');
+  if (!wrap) return;
+
+  if (!list.length) {
+    wrap.innerHTML = `<div class="empty-state"><div class="ei">🧑‍🤝‍🧑</div><p>${parts.length ? 'No matching participants.' : 'No participants yet. Registration-ൽ add ചെയ്യുക.'}</p></div>`;
+    return;
+  }
+
+  // Get each participant's registered competitions
+  wrap.innerHTML = `<div style="overflow-x:auto"><table class="lb-table" style="width:100%">
+    <thead><tr>
+      <th>#</th><th>NAME</th><th>CHEST NO.</th><th>TEAM</th><th>COMPETITIONS</th>
+    </tr></thead>
+    <tbody>${list.map((p, i) => {
+      const team = teams.find(t => t.id == p.group);
+      const partRegs = regs.filter(r => r.partId === p.id);
+      const compNames = partRegs.map(r => {
+        const prog = progs.find(x => x.id == r.progId);
+        return prog ? esc(prog.name) : '';
+      }).filter(Boolean);
+      return `<tr>
+        <td style="color:var(--muted);font-size:.76rem">${i + 1}</td>
+        <td style="font-weight:600">${esc(p.name)}</td>
+        <td style="font-family:'Inter','Manjari',sans-serif;color:var(--accent);font-weight:700">${esc(p.chest)}</td>
+        <td style="font-size:.82rem;font-weight:600">${team ? esc(team.name) : '—'}</td>
+        <td style="font-size:.78rem;color:var(--muted)">
+          ${compNames.length ? compNames.map(n => `<span style="display:inline-block;background:var(--dark4);border-radius:5px;padding:2px 7px;margin:2px;color:var(--text)">${n}</span>`).join('') : '—'}
+        </td>
+      </tr>`;
+    }).join('')}
+    </tbody></table></div>
+    <div style="font-size:.72rem;color:var(--muted);margin-top:8px">${list.length} of ${parts.length} participants</div>`;
 }
 
 // ═══ REGISTRATION ═══

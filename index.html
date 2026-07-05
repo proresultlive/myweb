@@ -278,7 +278,6 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
     <nav class="sidebar-nav">
       <div class="nav-section">MAIN</div>
       <div class="nav-item active" onclick="showPage('dashboard')"><span class="ni">📊</span>Dashboard</div>
-      <div class="nav-item" onclick="showPage('participants')"><span class="ni">🧑‍🤝‍🧑</span>Participants<span class="nbadge" id="nbPart">0</span></div>
       <div class="nav-item" onclick="showPage('programs')"><span class="ni">🎯</span>Competition<span class="nbadge" id="nbProg">0</span></div>
       <div class="nav-item" onclick="showPage('registration')"><span class="ni">📋</span>Registration<span class="nbadge" id="nbReg">0</span></div>
       <div class="nav-section">TEAMS</div>
@@ -398,27 +397,6 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
       </div>
 
       <!-- ── PARTICIPANTS ── -->
-      <div class="page" id="page-participants">
-        <div class="prog-header">
-          <h2>🧑‍🤝‍🧑 PARTICIPANTS</h2>
-          <div style="font-size:.75rem;color:var(--muted);font-family:'Inter','Manjari',sans-serif">Registration ൽ ചേർക്കുക</div>
-        </div>
-        <div class="card" style="margin-bottom:14px">
-          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-            <input class="form-input" id="partSearch" placeholder="🔍 Search by name or chest no..." style="max-width:280px;padding:8px 12px" oninput="renderParticipants()">
-            <select class="form-input" id="partFilterCat" onchange="renderParticipants()" style="max-width:180px;padding:8px 12px">
-              <option value="all">All Categories</option>
-            </select>
-            <select class="form-input" id="partFilterGroup" onchange="renderParticipants()" style="max-width:180px;padding:8px 12px">
-              <option value="all">All Teams</option>
-            </select>
-          </div>
-        </div>
-        <div class="card">
-          <div id="partTableWrap"></div>
-        </div>
-      </div>
-
       <!-- ── REGISTRATION ── -->
       <div class="page" id="page-registration">
         <div class="prog-header">
@@ -1020,6 +998,35 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
             <button class="btn btn-outline btn-sm" onclick="openUserModal()" style="margin-top:12px">+ Add User</button>
           </div>
         </div>
+
+        <!-- CLEAR DATA -->
+        <div style="max-width:700px;margin-top:16px">
+          <div class="card" style="border:1px solid rgba(224,52,79,.2);background:rgba(224,52,79,.03)">
+            <div class="card-title" style="color:var(--red)">🗑 Clear Data</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(0,0,0,.06)">
+                <div><div style="font-size:.85rem;font-weight:600">Participants & Registrations</div><div style="font-size:.72rem;color:var(--muted)">Parts list, registrations clear ആകും</div></div>
+                <button class="btn btn-red btn-sm" onclick="clearData('parts')">Clear</button>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(0,0,0,.06)">
+                <div><div style="font-size:.85rem;font-weight:600">Scores & Mark Entry</div><div style="font-size:.72rem;color:var(--muted)">Teams scores, judge marks clear ആകും</div></div>
+                <button class="btn btn-red btn-sm" onclick="clearData('scores')">Clear</button>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(0,0,0,.06)">
+                <div><div style="font-size:.85rem;font-weight:600">Programs & Categories</div><div style="font-size:.72rem;color:var(--muted)">Competitions, categories clear ആകും</div></div>
+                <button class="btn btn-red btn-sm" onclick="clearData('programs')">Clear</button>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(0,0,0,.06)">
+                <div><div style="font-size:.85rem;font-weight:600">Announcements</div><div style="font-size:.72rem;color:var(--muted)">All announcements clear ആകും</div></div>
+                <button class="btn btn-red btn-sm" onclick="clearData('anns')">Clear</button>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0">
+                <div><div style="font-size:.85rem;font-weight:600;color:var(--red)">⚠️ Clear ALL Data</div><div style="font-size:.72rem;color:var(--muted)">Teams, participants, programs, scores, announcements — എല്ലാം ഒഴിവാകും</div></div>
+                <button class="btn btn-red btn-sm" onclick="clearData('all')">Clear All</button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
     </div><!-- /content-area -->
@@ -1422,12 +1429,11 @@ function showPage(pg){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const pel=document.getElementById('page-'+pg);
   if(pel) pel.classList.add('active');
-  const T={dashboard:'DASHBOARD',participants:'PARTICIPANTS',programs:'COMPETITION',registration:'REGISTRATION',teams:'TEAMS',results:'RESULTS',liveresults:'LIVE RESULTS',home:'HOME PAGE',announcements:'ANNOUNCEMENTS',leaderboard:'LEADERBOARD',gallery:'GALLERY',publish:'PUBLISH',templates:'TEMPLATES',qrcards:'QR CARDS',attendance:'ATTENDANCE',awards:'AWARDS',markentry:'MARK ENTRY',analytics:'ANALYTICS',history:'HISTORY',settings:'SETTINGS'};
+  const T={dashboard:'DASHBOARD',programs:'COMPETITION',registration:'REGISTRATION',teams:'TEAMS',results:'RESULTS',liveresults:'LIVE RESULTS',home:'HOME PAGE',announcements:'ANNOUNCEMENTS',leaderboard:'LEADERBOARD',gallery:'GALLERY',publish:'PUBLISH',templates:'TEMPLATES',qrcards:'QR CARDS',attendance:'ATTENDANCE',awards:'AWARDS',markentry:'MARK ENTRY',analytics:'ANALYTICS',history:'HISTORY',settings:'SETTINGS'};
   document.getElementById('topbarTitle').textContent=T[pg]||pg.toUpperCase();
   document.querySelectorAll('.nav-item').forEach(n=>{if(n.textContent.toLowerCase().includes(pg.toLowerCase().slice(0,4)))n.classList.add('active')});
   document.getElementById('sidebar')?.classList.remove('open');
   if(pg==='dashboard') renderDash();
-  if(pg==='participants') renderParticipants();
   if(pg==='programs') renderProgs();
   if(pg==='teams') renderTeams();
   if(pg==='results') calcResults();
@@ -3888,6 +3894,42 @@ function renderSettings(){
       </div>
       ${i>0?`<button class="btn btn-red btn-xs" onclick="delUser('${u.username}')">Remove</button>`:'<span style="font-size:.68rem;color:var(--muted)">Owner</span>'}
     </div>`).join('');
+}
+function clearData(type) {
+  const labels = {
+    parts: 'Participants & Registrations',
+    scores: 'Scores & Mark Entry',
+    programs: 'Programs & Categories',
+    anns: 'Announcements',
+    all: 'ALL DATA'
+  };
+  if (!confirm(`"${labels[type]}" clear ചെയ്യണോ? ഇത് undo ആകില്ല.`)) return;
+
+  if (type === 'parts' || type === 'all') {
+    parts = []; sd('pr_parts', parts);
+    regs = []; sd('pr_regs', regs);
+    attendance = {}; sd('pr_attendance', attendance);
+  }
+  if (type === 'scores' || type === 'all') {
+    teams = teams.map(t => ({...t, members: []}));
+    sd('pr_teams', teams);
+    meJudgeData = {}; sd('pr_me_judges', meJudgeData);
+  }
+  if (type === 'programs' || type === 'all') {
+    progs = []; sd('pr_progs', progs);
+    cats = []; sd('pr_cats', cats);
+  }
+  if (type === 'anns' || type === 'all') {
+    anns = []; sd('pr_anns', anns);
+  }
+  if (type === 'all') {
+    hist = []; sd('pr_hist', hist);
+    gallery = []; sd('pr_gallery', gallery);
+    homeData = {title:'',tagline:'',date:'',venue:'',desc:'',org:'',contact:'',primary:'#247DE1',accent:'#1A5FB4'};
+    sd('pr_home', homeData);
+  }
+  showToast(`${labels[type]} cleared ✓`);
+  renderDash();
 }
 function changePassword(){
   const cur=document.getElementById('curPass').value;

@@ -277,31 +277,31 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
     </div>
     <nav class="sidebar-nav">
       <div class="nav-section">MAIN</div>
-      <div class="nav-item active" onclick="showPage('dashboard')"><span class="ni">📊</span>Dashboard</div>
-      <div class="nav-item" onclick="showPage('programs')"><span class="ni">🎯</span>Competition<span class="nbadge" id="nbProg">0</span></div>
-      <div class="nav-item" onclick="showPage('registration')"><span class="ni">📋</span>Registration<span class="nbadge" id="nbReg">0</span></div>
-      <div class="nav-item" onclick="showPage('participants')"><span class="ni">🧑‍🤝‍🧑</span>Participants<span class="nbadge" id="nbPart">0</span></div>
+      <div class="nav-item active" data-page="dashboard" onclick="showPage('dashboard')"><span class="ni">📊</span>Dashboard</div>
+      <div class="nav-item" data-page="programs" onclick="showPage('programs')"><span class="ni">🎯</span>Competition<span class="nbadge" id="nbProg">0</span></div>
+      <div class="nav-item" data-page="registration" onclick="showPage('registration')"><span class="ni">📋</span>Registration<span class="nbadge" id="nbReg">0</span></div>
+      <div class="nav-item" data-page="participants" onclick="showPage('participants')"><span class="ni">🧑‍🤝‍🧑</span>Participants<span class="nbadge" id="nbPart">0</span></div>
       <div class="nav-section">TEAMS</div>
-      <div class="nav-item" onclick="showPage('teams')"><span class="ni">👥</span>Teams<span class="nbadge" id="nbTeams">0</span></div>
+      <div class="nav-item" data-page="teams" onclick="showPage('teams')"><span class="ni">👥</span>Teams<span class="nbadge" id="nbTeams">0</span></div>
       <div class="nav-section">RESULTS</div>
-      <div class="nav-item" onclick="showPage('results')"><span class="ni">📊</span>Results</div>
-      <div class="nav-item" onclick="showPage('liveresults')"><span class="ni">📡</span>Live Results</div>
-      <div class="nav-item" onclick="showPage('history')"><span class="ni">📁</span>History</div>
+      <div class="nav-item" data-page="results" onclick="showPage('results')"><span class="ni">📊</span>Results</div>
+      <div class="nav-item" data-page="liveresults" onclick="showPage('liveresults')"><span class="ni">📡</span>Live Results</div>
+      <div class="nav-item" data-page="history" onclick="showPage('history')"><span class="ni">📁</span>History</div>
       <div class="nav-section">PAGES</div>
-      <div class="nav-item" onclick="showPage('home')"><span class="ni">🏠</span>Home Page</div>
-      <div class="nav-item" onclick="showPage('announcements')"><span class="ni">📢</span>Announcements<span class="nbadge" id="nbAnn">0</span></div>
-      <div class="nav-item" onclick="showPage('leaderboard')"><span class="ni">📊</span>Leaderboard</div>
-      <div class="nav-item" onclick="showPage('gallery')"><span class="ni">🖼</span>Gallery</div>
-      <div class="nav-item" onclick="showPage('publish')" style="color:var(--green);border-left-color:rgba(0,229,122,.0)"><span class="ni">🚀</span>Publish</div>
+      <div class="nav-item" data-page="home" onclick="showPage('home')"><span class="ni">🏠</span>Home Page</div>
+      <div class="nav-item" data-page="announcements" onclick="showPage('announcements')"><span class="ni">📢</span>Announcements<span class="nbadge" id="nbAnn">0</span></div>
+      <div class="nav-item" data-page="leaderboard" onclick="showPage('leaderboard')"><span class="ni">📊</span>Leaderboard</div>
+      <div class="nav-item" data-page="gallery" onclick="showPage('gallery')"><span class="ni">🖼</span>Gallery</div>
+      <div class="nav-item" data-page="publish" onclick="showPage('publish')" style="color:var(--green);border-left-color:rgba(0,229,122,.0)"><span class="ni">🚀</span>Publish</div>
       <div class="nav-section">TOOLS</div>
-      <div class="nav-item" onclick="showPage('markentry')" style="color:var(--accent);font-weight:600"><span class="ni">📝</span>Mark Entry</div>
-      <div class="nav-item" onclick="showPage('templates')"><span class="ni">🎨</span>Templates</div>
-      <div class="nav-item" onclick="showPage('qrcards')"><span class="ni">📱</span>QR Cards</div>
-      <div class="nav-item" onclick="showPage('attendance')"><span class="ni">✅</span>Attendance</div>
-      <div class="nav-item" onclick="showPage('awards')"><span class="ni">🏅</span>Awards</div>
-      <div class="nav-item" onclick="showPage('analytics')"><span class="ni">📈</span>Analytics</div>
+      <div class="nav-item" data-page="markentry" onclick="showPage('markentry')" style="color:var(--accent);font-weight:600"><span class="ni">📝</span>Mark Entry</div>
+      <div class="nav-item" data-page="templates" onclick="showPage('templates')"><span class="ni">🎨</span>Templates</div>
+      <div class="nav-item" data-page="qrcards" onclick="showPage('qrcards')"><span class="ni">📱</span>QR Cards</div>
+      <div class="nav-item" data-page="attendance" onclick="showPage('attendance')"><span class="ni">✅</span>Attendance</div>
+      <div class="nav-item" data-page="awards" onclick="showPage('awards')"><span class="ni">🏅</span>Awards</div>
+      <div class="nav-item" data-page="analytics" onclick="showPage('analytics')"><span class="ni">📈</span>Analytics</div>
       <div class="nav-section">SETTINGS</div>
-      <div class="nav-item" id="navSettings" onclick="showPage('settings')"><span class="ni">⚙️</span>Settings</div>
+      <div class="nav-item" id="navSettings" data-page="settings" onclick="showPage('settings')"><span class="ni">⚙️</span>Settings</div>
     </nav>
     <div class="sidebar-footer">
       <div class="sidebar-copy">© 2026 DEZIGN HUB</div>
@@ -791,6 +791,14 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
             <label style="display:flex;align-items:center;gap:10px;cursor:pointer;background:var(--dark3);border-radius:10px;padding:12px;border:1px solid rgba(255,255,255,.06)">
               <input type="checkbox" id="pubSearch" checked style="accent-color:var(--accent);width:16px;height:16px">
               <div><div style="font-size:.85rem;font-weight:600">🔍 Chest No. Search</div><div style="font-size:.7rem;color:var(--muted)">Individual results lookup</div></div>
+            </label>
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;background:var(--dark3);border-radius:10px;padding:12px;border:1px solid rgba(255,255,255,.06)">
+              <input type="checkbox" id="pubCatLeaders" checked style="accent-color:var(--accent);width:16px;height:16px">
+              <div><div style="font-size:.85rem;font-weight:600">🎖 Category Leaders</div><div style="font-size:.7rem;color:var(--muted)">Topper per category</div></div>
+            </label>
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;background:var(--dark3);border-radius:10px;padding:12px;border:1px solid rgba(255,255,255,.06)">
+              <input type="checkbox" id="pubLatestResults" checked style="accent-color:var(--accent);width:16px;height:16px">
+              <div><div style="font-size:.85rem;font-weight:600">🕐 Latest Results</div><div style="font-size:.7rem;color:var(--muted)">Recently completed programs</div></div>
             </label>
             <label style="display:flex;align-items:center;gap:10px;cursor:pointer;background:var(--dark3);border-radius:10px;padding:12px;border:1px solid rgba(255,255,255,.06)">
               <input type="checkbox" id="pubGallery" style="accent-color:var(--accent);width:16px;height:16px">
@@ -2938,6 +2946,8 @@ function generatePublicHTML() {
   const incScores  = document.getElementById('pubScores')?.checked;
   const incProgResults = document.getElementById('pubProgResults')?.checked;
   const incSearch = document.getElementById('pubSearch')?.checked;
+  const incCatLeaders = document.getElementById('pubCatLeaders')?.checked;
+  const incLatest = document.getElementById('pubLatestResults')?.checked;
   const githubUrl  = document.getElementById('pubGithubUrl')?.value.trim();
   if (githubUrl) localStorage.setItem('pr_github_url', githubUrl);
 
@@ -2945,7 +2955,6 @@ function generatePublicHTML() {
   const primary = d.primary || '#247DE1';
   const accent2 = d.accent || '#1A5FB4';
   const dateStr = d.date ? new Date(d.date).toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'}) : '';
-  const medal = ['🥇','🥈','🥉'];
   const ANN_IC = {info:'📢',important:'⚠️',result:'🏆',schedule:'📅'};
   const ANN_COL = {info:'#247DE133',important:'#FFA50033',result:'#FFD70033',schedule:'#00E57A33'};
   const ANN_BOR = {info:'#247DE155',important:'#FFA50055',result:'#FFD70055',schedule:'#00E57A55'};
@@ -3005,26 +3014,16 @@ function generatePublicHTML() {
   }
 
   if (incLive) {
-    navLinks.push(`<a href="#results" class="nav-link">Live Results</a>`);
+    navLinks.push(`<a href="#results" class="nav-link">Standings</a>`);
     const hasScores = standings.some(t => t.total > 0);
     liveSec = `<section id="results" class="section">
-      <h2 class="sec-title">📡 Live Results</h2>
+      <h2 class="sec-title">📡 Live Division Standings</h2>
       ${!hasScores ? `<div class="empty-msg">Results not available yet.</div>` :
-        `<div class="podium-row">
-          ${[1,0,2].filter(i=>standings[i]).map(i => {
-            const t = standings[i]; const isFirst = i===0;
-            return `<div class="podium-card${isFirst?' podium-first':''}">
-              <div class="podium-medal">${medal[i]}</div>
-              <div class="podium-name">${esc(t.name)}</div>
-              <div class="podium-pts" style="color:${accent2}">${t.total} pts</div>
-            </div>`;
-          }).join('')}
-        </div>
-        <div class="lb-wrap">
-          ${standings.map((t,i) => `<div class="lb-row${i===0?' lb-first':''}">
-            <span class="lb-rank">${medal[i]||'#'+(i+1)}</span>
+        `<div class="lb-wrap">
+          ${standings.map((t,i) => `<div class="lb-row${i<3?' lb-top'+(i+1):''}">
+            <span class="lb-rank${i<3?' lb-rank-top':''}">${i+1}</span>
             <span class="lb-name">${esc(t.name)}</span>
-            ${incScores ? `<span class="lb-pts" style="color:${accent2}">${t.total}</span>` : ''}
+            ${incScores ? `<span class="lb-pts" style="color:${accent2}">${t.total} pts</span>` : ''}
           </div>`).join('')}
         </div>`}
     </section>`;
@@ -3044,13 +3043,72 @@ function generatePublicHTML() {
         if (!catStand.length) return '';
         return `<div class="cat-block">
           <div class="cat-title">${esc(cat.name)}</div>
-          ${catStand.map((t,i)=>`<div class="lb-row${i===0?' lb-first':''}">
-            <span class="lb-rank">${medal[i]||'#'+(i+1)}</span>
+          ${catStand.map((t,i)=>`<div class="lb-row${i<3?' lb-top'+(i+1):''}">
+            <span class="lb-rank${i<3?' lb-rank-top':''}">${i+1}</span>
             <span class="lb-name">${esc(t.name)}</span>
             ${incScores?`<span class="lb-pts" style="color:${accent2}">${t.s}</span>`:''}
           </div>`).join('')}
         </div>`;
       }).join('')}
+    </section>`;
+  }
+
+  let catLeadersSec = '';
+  if (incCatLeaders && cats.length) {
+    navLinks.push(`<a href="#cat-leaders" class="nav-link">Category Leaders</a>`);
+    const leaderCards = cats.map(cat => {
+      const catProgs = progs.filter(p => p.catId === cat.id);
+      if (!catProgs.length) return `<div class="leader-card">
+        <div class="leader-cat">${esc(cat.name)}</div>
+        <div class="leader-topper">Results pending…</div>
+      </div>`;
+      // tally first-place wins per team for programs in this category
+      const winCount = {};
+      catProgs.forEach(prog => {
+        let entries = [];
+        teams.forEach(t => { getMProg(prog.id, t.id).forEach(m => entries.push({ teamId: t.id, teamName: t.name, score: m.score })); });
+        if (!entries.length) return;
+        entries.sort((a,b) => b.score - a.score);
+        const topScore = entries[0].score;
+        if (topScore <= 0) return;
+        entries.filter(e => e.score === topScore).forEach(e => { winCount[e.teamId] = (winCount[e.teamId]||0) + 1; });
+      });
+      const winners = Object.entries(winCount).sort((a,b) => b[1]-a[1]);
+      if (!winners.length) return `<div class="leader-card">
+        <div class="leader-cat">${esc(cat.name)}</div>
+        <div class="leader-topper">Results pending…</div>
+      </div>`;
+      const topTeam = teams.find(t => t.id == winners[0][0]);
+      const wins = winners[0][1];
+      return `<div class="leader-card">
+        <div class="leader-cat">${esc(cat.name)}</div>
+        <div class="leader-tag">Topper</div>
+        <div class="leader-topper" style="color:${accent2}">${topTeam?esc(topTeam.name):'—'}</div>
+        <div class="leader-wins">${wins} first place${wins>1?'s':''}</div>
+      </div>`;
+    }).join('');
+    catLeadersSec = `<section id="cat-leaders" class="section">
+      <h2 class="sec-title">🎖 Category Leaders (Overall)</h2>
+      <div class="leader-grid">${leaderCards}</div>
+    </section>`;
+  }
+
+  let latestSec = '';
+  if (incLatest && progs.length) {
+    navLinks.push(`<a href="#latest" class="nav-link">Latest Results</a>`);
+    const doneProgs = progs.filter(p => teams.some(t => getMProg(p.id, t.id).length > 0));
+    const recent = doneProgs.slice(-6).reverse();
+    latestSec = `<section id="latest" class="section">
+      <h2 class="sec-title">🕐 Latest Results</h2>
+      ${recent.length ? `<div class="lb-wrap">
+        ${recent.map(p => {
+          const cat = cats.find(c => c.id === p.catId);
+          return `<div class="latest-row">
+            <div class="latest-info"><span class="latest-name">${esc(p.name)}</span><span class="latest-meta">${cat?esc(cat.name):''}${cat && p.type ? ' · ' : ''}${p.type?(p.type==='group'?'Group':'Individual'):''}</span></div>
+            <span class="latest-status">Done</span>
+          </div>`;
+        }).join('')}
+      </div>` : `<div class="empty-msg">No results published yet.</div>`}
     </section>`;
   }
 
@@ -3079,8 +3137,8 @@ function generatePublicHTML() {
         return `<div class="cat-block">
           <div class="cat-title">${esc(prog.name)}${cat ? ' <span style="color:#666;font-weight:400">· '+esc(cat.name)+'</span>' : ''}</div>
           <div class="lb-wrap">
-            ${entries.map((e,i) => `<div class="lb-row${i===0?' lb-first':''}">
-              <span class="lb-rank">${medal[i]||'#'+(i+1)}</span>
+            ${entries.map((e,i) => `<div class="lb-row${i<3?' lb-top'+(i+1):''}">
+              <span class="lb-rank${i<3?' lb-rank-top':''}">${i+1}</span>
               <span class="lb-name">${esc(e.name)}${e.chest?` <span style="color:#777;font-size:.72rem;font-family:'Inter','Manjari',sans-serif">#${esc(e.chest)}</span>`:''}<br><span style="font-size:.68rem;color:#888">${esc(e.teamName)}</span></span>
               ${incScores ? `<span class="lb-pts" style="color:${accent2}">${e.score}</span>` : ''}
             </div>`).join('')}
@@ -3192,22 +3250,41 @@ function generatePublicHTML() {
     .ann-msg { font-size: .8rem; color: #bbb; line-height: 1.55; margin-bottom: 5px; }
     .ann-time { font-size: .65rem; color: var(--muted); font-family: 'Inter', 'Manjari', sans-serif; }
 
-    /* PODIUM */
-    .podium-row { display: flex; justify-content: center; align-items: flex-end; gap: 10px; flex-wrap: wrap; padding: 16px 0 20px; }
-    .podium-card { background: var(--dark3); border: 1px solid var(--border); border-radius: 14px; padding: 16px 14px; text-align: center; min-width: 90px; }
-    .podium-first { border-color: rgba(255,215,0,.3); background: rgba(255,215,0,.06); transform: translateY(-8px); }
-    .podium-medal { font-size: 1.8rem; margin-bottom: 6px; }
-    .podium-name { font-family: 'Montserrat', 'Manjari', sans-serif; font-size: .85rem; letter-spacing: 1px; color: var(--text); margin-bottom: 4px; word-break: break-word; }
-    .podium-pts { font-family: 'Inter', 'Manjari', sans-serif; font-weight: 700; font-size: .85rem; }
-
     /* LEADERBOARD */
     .lb-wrap { border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
     .lb-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--border); background: var(--dark2); }
     .lb-row:last-child { border-bottom: none; }
-    .lb-first { background: rgba(255,215,0,.05); }
-    .lb-rank { font-size: .95rem; min-width: 28px; }
+    .lb-top1 { background: rgba(255,215,0,.06); }
+    .lb-top2 { background: rgba(200,200,220,.05); }
+    .lb-top3 { background: rgba(205,127,50,.05); }
+    .lb-rank { font-family: 'Inter','Manjari',sans-serif; font-weight: 700; font-size: .82rem; min-width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(255,255,255,.06); color: var(--muted); }
+    .lb-rank-top { color: #0a0a0f; }
+    .lb-top1 .lb-rank-top { background: var(--gold, #FFD700); }
+    .lb-top2 .lb-rank-top { background: #C8C8DC; }
+    .lb-top3 .lb-rank-top { background: #CD7F32; }
     .lb-name { flex: 1; font-size: .88rem; font-weight: 600; }
     .lb-pts { font-family: 'Inter', 'Manjari', sans-serif; font-weight: 700; font-size: .9rem; }
+
+    /* CATEGORY LEADERS */
+    .leader-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); gap: 10px; }
+    .leader-card { background: var(--dark3); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+    .leader-cat { font-family: 'Montserrat', 'Manjari', sans-serif; font-size: .8rem; letter-spacing: 1px; color: var(--muted); margin-bottom: 8px; }
+    .leader-tag { font-size: .6rem; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 3px; }
+    .leader-topper { font-family: 'Montserrat', 'Manjari', sans-serif; font-size: 1rem; font-weight: 700; }
+    .leader-wins { font-size: .72rem; color: var(--muted); margin-top: 3px; }
+
+    /* LATEST RESULTS */
+    .latest-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--border); background: var(--dark2); }
+    .latest-row:last-child { border-bottom: none; }
+    .latest-info { display: flex; flex-direction: column; gap: 2px; }
+    .latest-name { font-size: .86rem; font-weight: 600; }
+    .latest-meta { font-size: .68rem; color: var(--muted); }
+    .latest-status { font-size: .68rem; font-weight: 700; letter-spacing: 1px; color: var(--green, #00E57A); background: rgba(0,229,122,.1); padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
+
+    /* QUICK LINKS */
+    .quicklinks { display: flex; flex-wrap: wrap; gap: 8px; }
+    .ql-link { display: inline-block; padding: 8px 14px; border: 1px solid var(--border); border-radius: 20px; color: var(--text); text-decoration: none; font-size: .78rem; background: var(--dark3); transition: border-color .15s; }
+    .ql-link:hover { border-color: rgba(255,255,255,.3); }
 
     /* CATEGORY */
     .cat-block { margin-bottom: 20px; }
@@ -3242,7 +3319,7 @@ function generatePublicHTML() {
     /* FOOTER */
     .page-footer { text-align: center; padding: 28px 16px; margin-top: 20px; border-top: 1px solid var(--border); font-size: .65rem; color: var(--muted); font-family: 'Inter', 'Manjari', sans-serif; letter-spacing: 1px; }
 
-    @media (max-width: 480px) { .stats-row { grid-template-columns: repeat(2,1fr); } .podium-card { min-width: 80px; padding: 12px 10px; } }
+    @media (max-width: 480px) { .stats-row { grid-template-columns: repeat(2,1fr); } .leader-grid { grid-template-columns: 1fr 1fr; } }
   </style>
 </head>
 <body>
@@ -3258,9 +3335,23 @@ function generatePublicHTML() {
   ${homeSec}
   ${annSec}
   ${liveSec}
+  ${catLeadersSec}
   ${leaderSec}
+  ${latestSec}
   ${progResultsSec}
   ${gallerySec}
+
+  <section class="section">
+    <h2 class="sec-title">🔗 Quick Links</h2>
+    <div class="quicklinks">
+      ${incLive?`<a href="#results" class="ql-link">Standings</a>`:''}
+      ${incCatLeaders&&cats.length?`<a href="#cat-leaders" class="ql-link">Category Leaders</a>`:''}
+      ${incLeader&&cats.length?`<a href="#leaderboard" class="ql-link">Leaderboard</a>`:''}
+      ${incLatest&&progs.length?`<a href="#latest" class="ql-link">Latest Results</a>`:''}
+      ${incGallery&&gallery.length?`<a href="#gallery" class="ql-link">Gallery</a>`:''}
+      ${incAnn&&anns.length?`<a href="#announcements" class="ql-link">Announcements</a>`:''}
+    </div>
+  </section>
 
   <footer class="page-footer">
     POWERED BY PRORESULT &nbsp;·&nbsp; DEZIGN HUB 2026 &nbsp;·&nbsp; Last updated: ${lastUpdated}
@@ -3273,13 +3364,12 @@ function generatePublicHTML() {
       if (!chest) { box.innerHTML = ''; return; }
       const data = window.__prSearchData || {};
       const rec = data[chest];
-      const medal = {1:'🥇',2:'🥈',3:'🥉'};
       if (!rec) {
         box.innerHTML = '<div class="sr-card"><div class="sr-empty">No participant found with chest number "' + chest.replace(/[<>]/g,'') + '". Please check and try again.</div></div>';
         return;
       }
       const rowsHtml = rec.results.length
-        ? rec.results.map(r => '<div class="sr-row"><span class="sr-rank">' + (medal[r.rank] || ('#'+r.rank)) + '</span><div class="sr-prog">' + r.program + '<div class="sr-team">' + r.team + '</div></div><span class="sr-score">' + r.score + ' pts</span></div>').join('')
+        ? rec.results.map(r => '<div class="sr-row"><span class="sr-rank">#' + r.rank + '</span><div class="sr-prog">' + r.program + '<div class="sr-team">' + r.team + '</div></div><span class="sr-score">' + r.score + ' pts</span></div>').join('')
         : '<div class="sr-empty">No results recorded yet for this participant.</div>';
       box.innerHTML = '<div class="sr-card"><div class="sr-name">' + rec.name + '</div><div class="sr-meta">Chest No: ' + chest + (rec.category ? ' · ' + rec.category : '') + (rec.group ? ' · ' + rec.group : '') + '</div><div style="margin-top:12px">' + rowsHtml + '</div></div>';
     }

@@ -596,6 +596,7 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
                 <div id="studentPosterPreview" style="border-radius:10px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.3)"></div>
                 <div style="display:flex;gap:8px;margin-top:10px">
                   <button class="btn btn-primary btn-sm" style="flex:1" onclick="downloadStudentPoster()">Download</button>
+                  <button class="btn btn-outline btn-sm" style="flex:1" onclick="downloadStudentPosterJPG()">📷 JPG</button>
                   <button class="btn btn-outline btn-sm" style="flex:1" onclick="printStudentPoster()">Print</button>
                 </div>
               </div>
@@ -2426,6 +2427,12 @@ function downloadStudentPoster() {
   showToast('Print dialog opening — choose Save as PDF');
 }
 
+function downloadStudentPosterJPG() {
+  const el = document.getElementById('studentPosterPreview');
+  const name = document.getElementById('spName')?.value || 'student_poster';
+  exportElementAsJPG(el, name);
+}
+
 function printStudentPoster() {
   const isDark = ['gold','dark','green','gradient'].includes(document.getElementById('spTheme')?.value);
   const w = window.open('', '_blank');
@@ -2464,6 +2471,7 @@ function renderTemplateGrid(){
       <div id="poster-${p.id}">${buildPosterHTML(p,ranked,cat,style,accent,eventName,org,dateStr)}</div>
       <div style="padding:10px 12px;display:flex;gap:8px;border-top:1px solid rgba(255,255,255,.06)">
         <button class="btn btn-primary btn-xs" style="flex:1;font-size:.74rem" onclick="downloadPoster('${p.id}','${esc(p.name)}')">Download</button>
+        <button class="btn btn-outline btn-xs" style="flex:1;font-size:.74rem" onclick="downloadPosterJPG('${p.id}','${esc(p.name)}')">📷 JPG</button>
         <button class="btn btn-outline btn-xs" style="flex:1;font-size:.74rem" onclick="printPoster('${p.id}','${esc(p.name)}')">Print</button>
       </div>
     </div>`;
@@ -2535,6 +2543,11 @@ function downloadPoster(pid, pname){
   w2.document.write(html);
   w2.document.close();w2.focus();
   showToast('Print dialog opening — choose Save as PDF');
+}
+
+function downloadPosterJPG(pid, pname) {
+  const el = document.getElementById('poster-' + pid);
+  exportElementAsJPG(el, pname || 'poster');
 }
 
 function printPoster(pid, pname){
@@ -3190,12 +3203,17 @@ function generatePublicHTML() {
     </section>`;
   }
 
+  let galleryDataScript = '';
   if (incGallery && gallery.length) {
     navLinks.push(`<a href="#gallery" class="nav-link">Gallery</a>`);
+    galleryDataScript = `<script>window.__prGalleryData = ${JSON.stringify(gallery.map(g=>({src:g.src,name:g.name})))};<\/script>`;
     gallerySec = `<section id="gallery" class="section">
       <h2 class="sec-title">🖼 Gallery</h2>
       <div class="gallery-grid">
-        ${gallery.map(g=>`<div class="gallery-item"><img src="${g.src}" alt="${esc(g.name)}" loading="lazy"></div>`).join('')}
+        ${gallery.map((g,gi)=>`<div class="gallery-item">
+          <img src="${g.src}" alt="${esc(g.name)}" loading="lazy">
+          <button class="gallery-dl-btn" onclick="downloadGalleryJPG(${gi})" title="Download as JPG">⬇</button>
+        </div>`).join('')}
       </div>
     </section>`;
   }
@@ -3292,8 +3310,10 @@ function generatePublicHTML() {
 
     /* GALLERY */
     .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px,1fr)); gap: 8px; }
-    .gallery-item { border-radius: 10px; overflow: hidden; aspect-ratio: 1; }
+    .gallery-item { position: relative; border-radius: 10px; overflow: hidden; aspect-ratio: 1; }
     .gallery-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .gallery-dl-btn { position: absolute; bottom: 6px; right: 6px; width: 30px; height: 30px; border-radius: 50%; border: none; background: rgba(10,10,15,.65); color: #fff; font-size: .9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); transition: background .15s; }
+    .gallery-dl-btn:hover { background: rgba(10,10,15,.9); }
 
     /* NOTIFICATION BANNER */
     .notif-banner { background: linear-gradient(90deg, rgba(255,215,0,.12), rgba(255,215,0,.04)); border-bottom: 1px solid rgba(255,215,0,.2); padding: 8px 16px; display: flex; align-items: center; gap: 10px; overflow: hidden; }
@@ -3324,6 +3344,7 @@ function generatePublicHTML() {
 </head>
 <body>
   ${searchDataScript}
+  ${galleryDataScript}
   <nav class="top-nav">
     <div class="nav-brand">${esc(d.title)||'ProResult'}</div>
     ${navLinks.join('')}
@@ -3374,6 +3395,27 @@ function generatePublicHTML() {
       box.innerHTML = '<div class="sr-card"><div class="sr-name">' + rec.name + '</div><div class="sr-meta">Chest No: ' + chest + (rec.category ? ' · ' + rec.category : '') + (rec.group ? ' · ' + rec.group : '') + '</div><div style="margin-top:12px">' + rowsHtml + '</div></div>';
     }
     document.getElementById('chestSearchInput')?.addEventListener('keydown', function(e){ if (e.key === 'Enter') searchByChest(); });
+
+    function downloadGalleryJPG(idx) {
+      const data = (window.__prGalleryData || [])[idx];
+      if (!data) return;
+      const img = new Image();
+      img.onload = function () {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+        canvas.toBlob(function (blob) {
+          if (!blob) return;
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = (data.name || 'photo').replace(/\.[^.]+$/, '').replace(/[^a-z0-9\-_]+/gi, '_') + '.jpg';
+          a.click();
+        }, 'image/jpeg', 0.92);
+      };
+      img.src = data.src;
+    }
   <\/script>
 </body>
 </html>`;
@@ -3605,6 +3647,28 @@ function loadScript(src) {
     document.head.appendChild(s);
     setTimeout(() => reject(new Error('Timeout loading ' + src)), 8000);
   });
+}
+
+// ── Shared: export any DOM element to a downloadable JPG image ──
+async function exportElementAsJPG(el, filename) {
+  if (!el) { showToast('Nothing to export.'); return; }
+  try {
+    showToast('Generating JPG...');
+    if (!window.html2canvas) {
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+    }
+    const canvas = await window.html2canvas(el, { scale: 2, useCORS: true, backgroundColor: null });
+    canvas.toBlob(blob => {
+      if (!blob) { showToast('JPG export failed.'); return; }
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = (filename || 'image').replace(/[^a-z0-9\-_]+/gi, '_') + '.jpg';
+      a.click();
+      showToast('JPG downloaded!');
+    }, 'image/jpeg', 0.92);
+  } catch (err) {
+    showToast('JPG export failed — check internet connection.');
+  }
 }
 
 function renderManualAttendance() {

@@ -598,17 +598,8 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
               <!-- Design -->
               <div class="card">
                 <div class="card-title">DESIGN</div>
-                <div class="form-field" style="margin-bottom:8px"><label>THEME</label>
-                  <select class="form-input" id="spTheme" onchange="refreshStudentPoster()" style="padding:8px 12px">
-                    <option value="gold">Gold Classic</option>
-                    <option value="dark">Dark Premium</option>
-                    <option value="green">Green Nature</option>
-                    <option value="minimal">Minimal White</option>
-                    <option value="gradient">Gradient Bold</option>
-                  </select>
-                </div>
                 <div class="form-field" style="margin-bottom:8px"><label>ACCENT COLOR</label>
-                  <input type="color" id="spAccent" value="#247DE1" oninput="refreshStudentPoster()" style="height:40px;width:100%;border-radius:10px;border:1px solid rgba(255,255,255,.1);cursor:pointer">
+                  <input type="color" id="spAccent" value="#e8d84a" oninput="refreshStudentPoster()" style="height:40px;width:100%;border-radius:10px;border:1px solid rgba(255,255,255,.1);cursor:pointer">
                 </div>
                 <div class="form-field" style="margin-bottom:8px">
                   <label>BACKGROUND IMAGE</label>
@@ -645,7 +636,7 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
                     <input type="checkbox" id="elOrg" checked onchange="refreshStudentPoster()" style="accent-color:var(--accent)"> Organizer
                   </label>
                   <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:.78rem">
-                    <input type="checkbox" id="elDeco" checked onchange="refreshStudentPoster()" style="accent-color:var(--accent)"> Decorations
+                    <input type="checkbox" id="elDeco" checked onchange="refreshStudentPoster()" style="accent-color:var(--accent)"> Leaf Graphic
                   </label>
                 </div>
                 <div class="form-field" style="margin-bottom:0"><label>CUSTOM QUOTE / MESSAGE</label>
@@ -676,26 +667,27 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
           <div class="card" style="margin-bottom:14px">
             <div class="card-title">CUSTOMIZE</div>
             <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px">
-              <div class="form-field" style="margin:0"><label>EVENT NAME</label>
+              <div class="form-field" style="margin:0"><label>EVENT / FESTIVAL NAME</label>
                 <input class="form-input" id="tplEventName" placeholder="Annual Arts Fest 2026" value="Annual Arts Fest 2026">
               </div>
+              <div class="form-field" style="margin:0"><label>EDITION (optional)</label>
+                <input class="form-input" id="tplEdition" placeholder="e.g. 33rd Edition">
+              </div>
               <div class="form-field" style="margin:0"><label>ORGANIZER</label>
-                <input class="form-input" id="tplOrg" placeholder="School Name">
+                <input class="form-input" id="tplOrg" placeholder="School / Division Name">
               </div>
               <div class="form-field" style="margin:0"><label>DATE</label>
                 <input class="form-input" id="tplDate" type="date">
               </div>
-              <div class="form-field" style="margin:0"><label>STYLE</label>
-                <select class="form-input" id="tplStyle" onchange="renderTemplateGrid()" style="padding:8px 12px">
-                  <option value="gold">Gold Classic</option>
-                  <option value="dark">Dark Premium</option>
-                  <option value="color">Colorful</option>
-                  <option value="minimal">Minimal</option>
-                </select>
+              <div class="form-field" style="margin:0"><label>VENUE</label>
+                <input class="form-input" id="tplVenue" placeholder="e.g. Kodur East">
               </div>
               <div class="form-field" style="margin:0"><label>ACCENT COLOR</label>
-                <input type="color" id="tplAccent" value="#247DE1" style="height:40px;width:100%;border-radius:10px;border:1px solid rgba(255,255,255,.1);cursor:pointer">
+                <input type="color" id="tplAccent" value="#e8d84a" style="height:40px;width:100%;border-radius:10px;border:1px solid rgba(255,255,255,.1);cursor:pointer" onchange="renderTemplateGrid()">
               </div>
+            </div>
+            <div class="form-field" style="margin:12px 0 0"><label>DESCRIPTION (shown at the bottom of the poster)</label>
+              <textarea class="form-input" id="tplDesc" rows="2" placeholder="Short note about the event / organizer..." onchange="renderTemplateGrid()"></textarea>
             </div>
             <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
               <button class="btn btn-primary btn-sm" onclick="renderTemplateGrid()">Update Posters</button>
@@ -2390,8 +2382,7 @@ function buildStudentPosterHTML() {
   const org = document.getElementById('spOrg')?.value || '';
   const dateVal = document.getElementById('spDate')?.value;
   const dateStr = dateVal ? new Date(dateVal).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '';
-  const theme = document.getElementById('spTheme')?.value || 'gold';
-  const accent = document.getElementById('spAccent')?.value || '#247DE1';
+  const accent = document.getElementById('spAccent')?.value || '#e8d84a';
   const bgOpacity = parseInt(document.getElementById('spBgOpacity')?.value || 60);
   const progId = document.getElementById('spProg')?.value;
   const prog = progId ? progs.find(p => p.id === progId || p.id == progId) : null;
@@ -2415,82 +2406,72 @@ function buildStudentPosterHTML() {
     });
   }
 
-  const themes = {
-    gold: { bg: '#12100a', header: 'linear-gradient(135deg,#5a3d00,#c8960c,#5a3d00)', text: '#ffe87a', sub: '#c8a84b', body: '#e8d89a', card: 'rgba(200,150,12,.12)', border: 'rgba(200,150,12,.3)', isDark: true },
-    dark: { bg: '#0d0d1a', header: `linear-gradient(135deg,${accent}dd,${accent}55)`, text: '#fff', sub: '#bbb', body: '#ddd', card: 'rgba(255,255,255,.06)', border: 'rgba(255,255,255,.12)', isDark: true },
-    green: { bg: '#071a0e', header: 'linear-gradient(135deg,#0a3d1f,#16a34a,#0a3d1f)', text: '#86efac', sub: '#4ade80', body: '#d1fae5', card: 'rgba(22,163,74,.12)', border: 'rgba(22,163,74,.3)', isDark: true },
-    minimal: { bg: '#fff', header: '#fff', text: '#111', sub: '#555', body: '#333', card: '#f5f5f5', border: '#ddd', isDark: false },
-    gradient: { bg: `linear-gradient(160deg,#0d0d1a,${accent}33,#0d0d1a)`, header: `linear-gradient(135deg,${accent},${accent}88)`, text: '#fff', sub: '#ddd', body: '#eee', card: 'rgba(255,255,255,.07)', border: 'rgba(255,255,255,.15)', isDark: true },
-  };
-  const s = themes[theme] || themes.gold;
-
   const medalMap = { '1st Place': '🥇', '2nd Place': '🥈', '3rd Place': '🥉', 'Winner': '🏆', '1': '🥇', '2': '🥈', '3': '🥉' };
   const medalIcon = medalMap[rank] || (rank.startsWith('1') ? '🥇' : rank.startsWith('2') ? '🥈' : rank.startsWith('3') ? '🥉' : '🏅');
+  const initial = (org || eventName || 'P').trim().charAt(0).toUpperCase();
+  const metaLine = [dateStr, elOrg && org ? org : ''].filter(Boolean).join('  ·  ');
 
-  const decoSvg = elDeco ? `<svg style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;opacity:.18" viewBox="0 0 400 560" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="30" cy="40" r="60" fill="none" stroke="${s.isDark ? '#fff' : '#000'}" stroke-width="1.5"/>
-    <circle cx="370" cy="520" r="80" fill="none" stroke="${s.isDark ? '#fff' : '#000'}" stroke-width="1.5"/>
-    <line x1="0" y1="280" x2="400" y2="280" stroke="${s.isDark ? '#fff' : '#000'}" stroke-width=".5" stroke-dasharray="6,6"/>
-    <polygon points="360,20 380,60 340,60" fill="none" stroke="${s.isDark ? '#fff' : '#000'}" stroke-width="1.2"/>
-    <polygon points="20,510 40,540 0,540" fill="none" stroke="${s.isDark ? '#fff' : '#000'}" stroke-width="1.2"/>
-    <circle cx="200" cy="20" r="4" fill="${s.isDark ? '#ffffff44' : '#00000033'}"/>
-    <circle cx="180" cy="540" r="4" fill="${s.isDark ? '#ffffff44' : '#00000033'}"/>
+  const leafSvg = elDeco ? `<svg viewBox="0 0 340 460" style="position:absolute;right:-70px;bottom:-30px;width:290px;height:auto;z-index:0" preserveAspectRatio="xMidYMax meet">
+    <defs>
+      <linearGradient id="spLeafFill" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#8fce6a"/>
+        <stop offset="45%" stop-color="#4f9a4a"/>
+        <stop offset="100%" stop-color="#1f5c33"/>
+      </linearGradient>
+    </defs>
+    <path d="M300 40 C 250 10, 150 -10, 90 60 C 20 140, 10 260, 60 360 C 100 430, 190 465, 260 450 C 300 440, 320 400, 320 350 C 320 260, 330 140, 300 40 Z" fill="url(#spLeafFill)" opacity="0.92"/>
+    <path d="M300 40 C 240 130, 200 250, 200 460" stroke="rgba(255,255,255,.35)" stroke-width="3" fill="none"/>
+    <path d="M240 150 C 210 165, 190 185, 175 210" stroke="rgba(255,255,255,.18)" stroke-width="2" fill="none"/>
+    <path d="M225 250 C 195 262, 175 280, 160 305" stroke="rgba(255,255,255,.18)" stroke-width="2" fill="none"/>
+    <path d="M215 340 C 185 350, 165 365, 150 385" stroke="rgba(255,255,255,.18)" stroke-width="2" fill="none"/>
   </svg>` : '';
-
-  const bgStyle = spBgDataUrl
-    ? `background:${s.bg};position:relative;`
-    : `background:${s.bg};`;
 
   const bgOverlay = spBgDataUrl
     ? `<div style="position:absolute;inset:0;background-image:url('${spBgDataUrl}');background-size:cover;background-position:center;opacity:${(100 - bgOpacity) / 100};z-index:0"></div>
-       <div style="position:absolute;inset:0;background:${s.isDark ? `rgba(0,0,0,${bgOpacity / 100})` : `rgba(255,255,255,${bgOpacity / 100})`};z-index:1"></div>`
+       <div style="position:absolute;inset:0;background:rgba(0,0,0,${bgOpacity / 100});z-index:0"></div>`
     : '';
 
-  const zContent = spBgDataUrl ? 'position:relative;z-index:2;' : '';
-
-  return `<div style="${bgStyle}font-family:\'Poppins\',sans-serif;width:100%;min-height:480px;overflow:hidden;position:relative">
+  return `<div style="position:relative;overflow:hidden;background:#15161c;background-image:radial-gradient(circle at 15% 10%, rgba(255,255,255,.05), transparent 40%);font-family:'Poppins',sans-serif;width:100%;min-height:520px;padding:26px 24px 20px;color:#eee">
     ${bgOverlay}
-    ${decoSvg}
+    ${leafSvg}
+    <div style="position:relative;z-index:1">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+        <div style="width:34px;height:34px;border-radius:50%;border:1.5px solid ${accent};display:flex;align-items:center;justify-content:center;font-family:'Montserrat','Manjari',sans-serif;font-weight:700;font-size:.9rem;color:${accent};flex-shrink:0">${esc(initial)}</div>
+        <div style="min-width:0">
+          <div style="font-family:'Montserrat','Manjari',sans-serif;font-size:1.05rem;font-weight:700;letter-spacing:.5px;color:#fff;line-height:1.15;word-break:break-word">${esc(eventName)}</div>
+        </div>
+      </div>
+      ${elDate && metaLine ? `<div style="font-family:'Inter','Manjari',sans-serif;font-size:.66rem;color:#999;letter-spacing:.5px;margin:8px 0 0 44px">${esc(metaLine)}</div>` : ''}
 
-    <!-- Header band -->
-    <div style="${zContent}background:${s.header};padding:18px 20px 14px;text-align:center">
-      <div style="font-family:\'Montserrat\',\'Manjari\',sans-serif;font-size:.6rem;letter-spacing:3px;color:${s.sub};margin-bottom:3px">${esc(eventName)}${elOrg && org ? ' · ' + esc(org) : ''}</div>
-      ${elDate && dateStr ? `<div style="font-size:.6rem;color:${s.sub};font-family:\'Inter\',\'Manjari\',sans-serif;margin-top:2px;letter-spacing:1px">${dateStr}</div>` : ''}
-    </div>
+      <div style="border-top:1px solid rgba(255,255,255,.1);margin:20px 0 22px"></div>
 
-    <!-- Medal + rank -->
-    <div style="${zContent}text-align:center;padding:20px 16px 8px">
-      ${elMedal ? `<div style="font-size:3.2rem;line-height:1;margin-bottom:8px;filter:drop-shadow(0 4px 12px rgba(0,0,0,.4))">${medalIcon}</div>` : ''}
-      <div style="font-family:\'Montserrat\',\'Manjari\',sans-serif;font-size:1.1rem;letter-spacing:3px;color:${s.text};background:${s.card};border:1px solid ${s.border};display:inline-block;padding:5px 18px;border-radius:30px;margin-bottom:12px">${esc(rank)}</div>
-    </div>
+      <div style="text-align:center">
+        ${elMedal ? `<div style="font-size:2.6rem;line-height:1;margin-bottom:10px;filter:drop-shadow(0 4px 12px rgba(0,0,0,.4))">${medalIcon}</div>` : ''}
+        <div style="font-family:'Inter','Manjari',sans-serif;font-size:.68rem;letter-spacing:3px;color:#999;margin-bottom:6px">${esc((rank||'').toUpperCase())}</div>
+        <div style="font-family:'Montserrat','Manjari',sans-serif;font-size:1.8rem;font-weight:800;color:${accent};line-height:1.15;word-break:break-word">${esc(name)}</div>
+        ${elChest && chest ? `<div style="font-family:'Inter','Manjari',sans-serif;font-size:.7rem;color:#999;margin-top:6px;letter-spacing:1px">CHEST NO: ${esc(chest)}</div>` : ''}
+        ${prog ? `<div style="font-size:.86rem;color:#ccc;margin-top:10px;font-weight:600">${esc(prog.name)}</div>` : ''}
+        ${elScore && scoreVal !== '' ? `<div style="font-family:'Inter','Manjari',sans-serif;font-size:1.3rem;font-weight:700;color:#fff;margin-top:10px">${scoreVal} <span style="font-size:.62rem;font-weight:400;color:#999">pts</span></div>` : ''}
+      </div>
 
-    <!-- Name block -->
-    <div style="${zContent}text-align:center;padding:0 20px 16px">
-      <div style="font-family:\'Montserrat\',\'Manjari\',sans-serif;font-size:2rem;letter-spacing:4px;color:${s.text};line-height:1.1;word-break:break-word">${esc(name)}</div>
-      ${elChest && chest ? `<div style="font-family:\'Inter\',\'Manjari\',sans-serif;font-size:.72rem;color:${s.sub};margin-top:5px;letter-spacing:2px">CHEST NO: ${esc(chest)}</div>` : ''}
-      ${prog ? `<div style="font-size:.82rem;color:${s.body};margin-top:8px;font-weight:600">${esc(prog.name)}</div>` : ''}
-      ${elScore && scoreVal !== '' ? `<div style="font-family:\'Inter\',\'Manjari\',sans-serif;font-size:1.4rem;font-weight:700;color:${s.text};margin-top:8px">${scoreVal} <span style="font-size:.65rem;font-weight:400;color:${s.sub}">pts</span></div>` : ''}
-    </div>
+      ${quote ? `<div style="margin-top:22px;text-align:center;font-size:.78rem;color:#999;font-style:italic;line-height:1.5">"${esc(quote)}"</div>` : ''}
 
-    <!-- Quote -->
-    ${quote ? `<div style="${zContent}text-align:center;padding:0 24px 16px;font-size:.8rem;color:${s.sub};font-style:italic;line-height:1.5">"${esc(quote)}"</div>` : ''}
-
-    <!-- Footer -->
-    <div style="${zContent}text-align:center;padding:10px 16px 14px;border-top:1px solid ${s.border}">
-      <div style="font-size:.58rem;color:${s.isDark ? '#555' : '#bbb'};font-family:\'Inter\',\'Manjari\',sans-serif;letter-spacing:1px">POWERED BY PRORESULT · DEZIGN HUB</div>
+      <div style="margin-top:22px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
+        <div style="font-size:.62rem;letter-spacing:1px;color:#888">${elOrg&&org?'ORGANIZED BY <span style=\"color:#ccc;font-weight:600\">'+esc(org)+'</span>':''}</div>
+        <div style="font-size:.55rem;letter-spacing:1px;color:#555">PRORESULT · DEZIGN HUB</div>
+      </div>
     </div>
   </div>`;
 }
 
 function downloadStudentPoster() {
-  const isDark = ['gold','dark','green','gradient'].includes(document.getElementById('spTheme')?.value || 'gold');
   const posterHTML = buildStudentPosterHTML();
   const w = window.open('', '_blank');
   w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Student Result Poster</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Poppins:wght@400;500;600;700&family=Inter:wght@400;600;700&family=Manjari:wght@400;700&display=swap" rel="stylesheet">
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
-    body{background:${isDark?'#111':'#e8e8e8'};display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+    body{background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
     .wrap{width:400px;border-radius:18px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.5)}
     @media print{
       *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
@@ -2512,11 +2493,10 @@ function downloadStudentPosterJPG() {
 }
 
 function printStudentPoster() {
-  const isDark = ['gold','dark','green','gradient'].includes(document.getElementById('spTheme')?.value);
   const w = window.open('', '_blank');
   w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Student Poster</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Poppins:wght@400;500;600;700&family=Inter:wght@400;600;700&family=Manjari:wght@400;700&display=swap" rel="stylesheet">
-  <style>*{box-sizing:border-box;margin:0;padding:0}body{background:${isDark ? '#111' : '#eee'};display:flex;align-items:center;justify-content:center;min-height:100vh}
+  <style>*{box-sizing:border-box;margin:0;padding:0}body{background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh}
   .wrap{width:380px;border-radius:16px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.4)}
   @media print{body{background:white}.wrap{box-shadow:none;width:100%;border-radius:0}}</style>
   </head><body><div class="wrap">${buildStudentPosterHTML()}</div></body></html>`);
@@ -2534,19 +2514,14 @@ function renderTemplateGrid(){
   const grid=document.getElementById('templateGrid');
   if(!grid) return;
   const pid=document.getElementById('tplProgSel')?.value||'all';
-  const style=document.getElementById('tplStyle')?.value||'gold';
-  const accent=document.getElementById('tplAccent')?.value||'#247DE1';
-  const eventName=document.getElementById('tplEventName')?.value||'Competition 2026';
-  const org=document.getElementById('tplOrg')?.value||'';
-  const dateVal=document.getElementById('tplDate')?.value;
-  const dateStr=dateVal?new Date(dateVal).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+  const opts=getTplOpts();
   const list=pid==='all'?progs:progs.filter(p=>p.id===pid||p.id==pid);
   if(!list.length){grid.innerHTML=`<div class="empty-state"><div class="ei">🎨</div><p>Programs ഇല്ല. Programs section-ൽ ചേർക്കുക.</p></div>`;return;}
-  grid.innerHTML=list.map(p=>{
+  grid.innerHTML=list.map((p,idx)=>{
     const ranked=teams.map(t=>{const ms=getMProg(p.id,t.id);return{...t,total:ms.reduce((s,m)=>s+m.score,0),cnt:ms.length};}).filter(t=>t.total>0).sort((a,b)=>b.total-a.total);
     const cat=cats.find(c=>c.id===p.catId);
     return `<div style="background:var(--dark3);border:1px solid rgba(255,255,255,.07);border-radius:16px;overflow:hidden">
-      <div id="poster-${p.id}">${buildPosterHTML(p,ranked,cat,style,accent,eventName,org,dateStr)}</div>
+      <div id="poster-${p.id}">${buildPosterHTML(p,ranked,cat,opts,idx+1)}</div>
       <div style="padding:10px 12px;display:flex;gap:8px;border-top:1px solid rgba(255,255,255,.06)">
         <button class="btn btn-primary btn-xs" style="flex:1;font-size:.74rem" onclick="downloadPoster('${p.id}','${esc(p.name)}')">Download</button>
         <button class="btn btn-outline btn-xs" style="flex:1;font-size:.74rem" onclick="downloadPosterJPG('${p.id}','${esc(p.name)}')">📷 JPG</button>
@@ -2556,63 +2531,98 @@ function renderTemplateGrid(){
   }).join('');
 }
 
-function buildPosterHTML(p, ranked, cat, style, accent, eventName, org, dateStr){
-  const medal=['🥇','🥈','🥉'];
-  const top3=ranked.slice(0,3);
-  const styles={
-    gold:{bg:'#1a1200',header:'linear-gradient(135deg,#7a5c00,#c8960c,#7a5c00)',text:'#ffe87a',sub:'#c8a84b',card:'rgba(200,150,12,.1)',border:'rgba(200,150,12,.3)',rank:'#c8960c'},
-    dark:{bg:'#0d0d1a',header:`linear-gradient(135deg,${accent}cc,${accent}44)`,text:'#fff',sub:'#aaa',card:'rgba(255,255,255,.05)',border:'rgba(255,255,255,.1)',rank:accent},
-    color:{bg:'#fff',header:`linear-gradient(135deg,${accent},${accent}bb)`,text:'#fff',sub:'rgba(255,255,255,.85)',card:'#f8f8ff',border:'#ddd',rank:accent},
-    minimal:{bg:'#fff',header:'#fff',text:'#111',sub:'#555',card:'#f5f5f5',border:'#e0e0e0',rank:'#111'},
+function getTplOpts(){
+  const dateVal=document.getElementById('tplDate')?.value;
+  return {
+    eventName:document.getElementById('tplEventName')?.value||'Competition 2026',
+    edition:document.getElementById('tplEdition')?.value||'',
+    org:document.getElementById('tplOrg')?.value||'',
+    venue:document.getElementById('tplVenue')?.value||'',
+    desc:document.getElementById('tplDesc')?.value||'',
+    accent:document.getElementById('tplAccent')?.value||'#e8d84a',
+    dateStr:dateVal?new Date(dateVal).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})
   };
-  const s=styles[style]||styles.gold;
-  const isDark=style==='gold'||style==='dark';
-  const bodyText=isDark?'#e8e8f0':'#222';
-  return `<div style="background:${s.bg};font-family:'Poppins',sans-serif;padding:0">
-    <div style="background:${s.header};padding:20px 18px 16px;text-align:center">
-      <div style="font-family:'Montserrat','Manjari',sans-serif;font-size:.65rem;letter-spacing:3px;color:${s.sub};margin-bottom:4px">${esc(eventName)}${org?' · '+esc(org):''}</div>
-      <div style="font-family:'Montserrat','Manjari',sans-serif;font-size:1.7rem;letter-spacing:3px;color:${s.text};line-height:1.1">${esc(p.name)}</div>
-      <div style="font-size:.65rem;color:${s.sub};font-family:'Inter','Manjari',sans-serif;margin-top:5px;letter-spacing:1px">RESULT · ${dateStr}</div>
-    </div>
-    <div style="padding:16px 14px 10px">
-      ${ranked.length===0?`<div style="text-align:center;padding:20px;color:${isDark?'#666':'#aaa'};font-size:.8rem">No scores yet</div>`:`
-      <div style="display:flex;justify-content:center;align-items:flex-end;gap:8px;flex-wrap:wrap;margin-bottom:14px">
-        ${[1,0,2].filter(i=>top3[i]).map(i=>{const t=top3[i];const isFirst=i===0;
-          return `<div style="background:${s.card};border:1px solid ${s.border};border-radius:12px;padding:${isFirst?'16px 14px':'12px 10px'};text-align:center;min-width:${isFirst?'95px':'80px'};${isFirst?'transform:translateY(-8px)':''}">
-            <div style="font-size:${isFirst?'1.6rem':'1.3rem'}">${medal[i]||''}</div>
-            <div style="font-family:'Montserrat','Manjari',sans-serif;font-size:${isFirst?'.85rem':'.72rem'};color:${s.rank};letter-spacing:1px;margin-top:4px;word-break:break-word">${esc(t.name)}</div>
-            <div style="font-family:'Inter','Manjari',sans-serif;font-size:${isFirst?'.85rem':'.72rem'};color:${s.text};font-weight:700;margin-top:3px">${t.total} pts</div>
-          </div>`;}).join('')}
+}
+
+function buildPosterHTML(p, ranked, cat, opts, resultNo){
+  const accent=opts.accent||'#e8d84a';
+  const initial=(opts.org||opts.eventName||'P').trim().charAt(0).toUpperCase();
+  const metaLine=[opts.dateStr,opts.venue].filter(Boolean).join('  ·  ');
+  const winners=ranked.slice(0,3);
+  const rest=ranked.slice(3);
+  return `<div style="position:relative;overflow:hidden;background:#15161c;background-image:radial-gradient(circle at 15% 10%, rgba(255,255,255,.05), transparent 40%);font-family:'Poppins',sans-serif;min-height:540px;padding:26px 24px 20px;color:#eee">
+    <svg viewBox="0 0 340 460" style="position:absolute;right:-70px;bottom:-30px;width:290px;height:auto;z-index:0" preserveAspectRatio="xMidYMax meet">
+      <defs>
+        <linearGradient id="leafFill-${p.id}" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#8fce6a"/>
+          <stop offset="45%" stop-color="#4f9a4a"/>
+          <stop offset="100%" stop-color="#1f5c33"/>
+        </linearGradient>
+      </defs>
+      <path d="M300 40 C 250 10, 150 -10, 90 60 C 20 140, 10 260, 60 360 C 100 430, 190 465, 260 450 C 300 440, 320 400, 320 350 C 320 260, 330 140, 300 40 Z" fill="url(#leafFill-${p.id})" opacity="0.92"/>
+      <path d="M300 40 C 240 130, 200 250, 200 460" stroke="rgba(255,255,255,.35)" stroke-width="3" fill="none"/>
+      <path d="M240 150 C 210 165, 190 185, 175 210" stroke="rgba(255,255,255,.18)" stroke-width="2" fill="none"/>
+      <path d="M225 250 C 195 262, 175 280, 160 305" stroke="rgba(255,255,255,.18)" stroke-width="2" fill="none"/>
+      <path d="M215 340 C 185 350, 165 365, 150 385" stroke="rgba(255,255,255,.18)" stroke-width="2" fill="none"/>
+    </svg>
+    ${opts.edition?`<div style="position:absolute;left:-38px;top:50%;transform:translateY(-50%) rotate(-90deg);font-family:'Inter','Manjari',sans-serif;font-size:.58rem;letter-spacing:2px;color:rgba(255,255,255,.25);white-space:nowrap;z-index:0">${esc(opts.eventName)} &nbsp;|&nbsp; ${esc(opts.edition)}</div>`:''}
+    <div style="position:relative;z-index:1">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+        <div style="width:34px;height:34px;border-radius:50%;border:1.5px solid ${accent};display:flex;align-items:center;justify-content:center;font-family:'Montserrat','Manjari',sans-serif;font-weight:700;font-size:.9rem;color:${accent};flex-shrink:0">${esc(initial)}</div>
+        <div style="min-width:0">
+          <div style="font-family:'Montserrat','Manjari',sans-serif;font-size:1.05rem;font-weight:700;letter-spacing:.5px;color:#fff;line-height:1.15;word-break:break-word">${esc(opts.eventName)}</div>
+          ${opts.edition?`<div style="font-family:'Inter','Manjari',sans-serif;font-size:.62rem;letter-spacing:2px;color:${accent};margin-top:1px">${esc(opts.edition.toUpperCase())}</div>`:''}
+        </div>
       </div>
-      ${ranked.length>3?`<div style="border-top:1px solid ${s.border};padding-top:10px">
-        ${ranked.slice(3).map((t,i)=>`<div style="display:flex;justify-content:space-between;padding:5px 4px;border-bottom:1px solid ${isDark?'rgba(255,255,255,.04)':'#eee'}">
-          <span style="font-size:.78rem;color:${bodyText}">${i+4}. ${esc(t.name)}</span>
-          <span style="font-family:'Inter','Manjari',sans-serif;font-size:.75rem;color:${s.rank};font-weight:700">${t.total}</span>
+      ${metaLine?`<div style="font-family:'Inter','Manjari',sans-serif;font-size:.66rem;color:#999;letter-spacing:.5px;margin:8px 0 0 44px">${esc(metaLine)}</div>`:''}
+
+      <div style="border-top:1px solid rgba(255,255,255,.1);margin:20px 0 18px"></div>
+
+      <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:22px">
+        <div style="font-family:'Montserrat','Manjari',sans-serif;font-size:3.2rem;font-weight:300;color:rgba(255,255,255,.18);line-height:1;flex-shrink:0">${resultNo||''}</div>
+        <div style="padding-top:6px;min-width:0">
+          <div style="font-family:'Inter','Manjari',sans-serif;font-size:.68rem;letter-spacing:2px;color:#999">${cat?esc(cat.name.toUpperCase()):'RESULT'}</div>
+          <div style="font-family:'Montserrat','Manjari',sans-serif;font-size:1.55rem;font-weight:800;color:${accent};line-height:1.15;margin-top:2px;word-break:break-word">${esc(p.name)}</div>
+        </div>
+      </div>
+
+      ${winners.length===0?`<div style="text-align:center;padding:30px 10px;color:#666;font-size:.82rem">No scores yet</div>`:`
+      <div style="display:flex;flex-direction:column;gap:14px">
+        ${winners.map((t,i)=>`<div style="display:flex;align-items:center;gap:14px">
+          <div style="font-family:'Montserrat','Manjari',sans-serif;font-size:2rem;font-weight:300;color:${i===0?accent:'rgba(255,255,255,.35)'};min-width:44px">0${i+1}</div>
+          <div style="min-width:0">
+            <div style="font-family:'Montserrat','Manjari',sans-serif;font-size:1rem;font-weight:700;color:#fff;word-break:break-word">${esc(t.name)}</div>
+            <div style="font-family:'Inter','Manjari',sans-serif;font-size:.76rem;color:#999;margin-top:1px">${t.cnt?t.cnt+' participant'+(t.cnt>1?'s':'')+' · ':''}${t.total} pts</div>
+          </div>
+        </div>`).join('')}
+      </div>
+      ${rest.length?`<div style="margin-top:14px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08)">
+        ${rest.map((t,i)=>`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:.74rem;color:#aaa">
+          <span>${i+4}. ${esc(t.name)}</span><span style="color:${accent};font-weight:700">${t.total}</span>
         </div>`).join('')}
       </div>`:''}`}
-    </div>
-    <div style="text-align:center;padding:8px 14px 12px;border-top:1px solid ${s.border}">
-      <div style="font-size:.58rem;color:${isDark?'#555':'#bbb'};font-family:'Inter','Manjari',sans-serif;letter-spacing:1px">POWERED BY PRORESULT · DEZIGN HUB</div>
+
+      ${opts.desc?`<div style="margin-top:22px;font-size:.6rem;line-height:1.6;color:#666">${esc(opts.desc)}</div>`:''}
+
+      <div style="margin-top:18px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
+        <div style="font-size:.62rem;letter-spacing:1px;color:#888">${opts.org?'ORGANIZED BY <span style=\"color:#ccc;font-weight:600\">'+esc(opts.org)+'</span>':''}</div>
+        <div style="font-size:.55rem;letter-spacing:1px;color:#555">PRORESULT · DEZIGN HUB</div>
+      </div>
     </div>
   </div>`;
 }
 
 function downloadPoster(pid, pname){
-  const style=document.getElementById('tplStyle')?.value||'gold';
-  const accent=document.getElementById('tplAccent')?.value||'#247DE1';
-  const eventName=document.getElementById('tplEventName')?.value||'Competition 2026';
-  const org=document.getElementById('tplOrg')?.value||'';
-  const dateVal=document.getElementById('tplDate')?.value;
-  const dateStr=dateVal?new Date(dateVal).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+  const opts=getTplOpts();
   const p=progs.find(x=>x.id==pid||x.id===pid);
   if(!p) return;
-  const ranked=teams.map(t=>{const ms=getMProg(p.id,t.id);return{...t,total:ms.reduce((s,m)=>s+m.score,0)};}).filter(t=>t.total>0).sort((a,b)=>b.total-a.total);
+  const resultNo=progs.findIndex(x=>x.id==pid||x.id===pid)+1;
+  const ranked=teams.map(t=>{const ms=getMProg(p.id,t.id);return{...t,total:ms.reduce((s,m)=>s+m.score,0),cnt:ms.length};}).filter(t=>t.total>0).sort((a,b)=>b.total-a.total);
   const cat=cats.find(c=>c.id===p.catId);
-  const posterHTML=buildPosterHTML(p,ranked,cat,style,accent,eventName,org,dateStr);
-  const isDark=style==='gold'||style==='dark';
+  const posterHTML=buildPosterHTML(p,ranked,cat,opts,resultNo);
   const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${pname} Result</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Poppins:wght@400;500;600;700&family=Inter:wght@400;600;700&family=Manjari:wght@400;700&display=swap" rel="stylesheet">
-  <style>*{box-sizing:border-box;margin:0;padding:0}body{background:${isDark?'#111':'#f0f0f0'};display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+  <style>*{box-sizing:border-box;margin:0;padding:0}body{background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
   .wrap{width:360px;border-radius:16px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3)}
   @media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}body{background:white;padding:0;display:block}.wrap{box-shadow:none;width:100%;border-radius:0}}</style>
   </head><body><div class="wrap">${posterHTML}</div>
@@ -2629,22 +2639,17 @@ function downloadPosterJPG(pid, pname) {
 }
 
 function printPoster(pid, pname){
-  const style=document.getElementById('tplStyle')?.value||'gold';
-  const accent=document.getElementById('tplAccent')?.value||'#247DE1';
-  const eventName=document.getElementById('tplEventName')?.value||'Competition 2026';
-  const org=document.getElementById('tplOrg')?.value||'';
-  const dateVal=document.getElementById('tplDate')?.value;
-  const dateStr=dateVal?new Date(dateVal).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+  const opts=getTplOpts();
   const p=progs.find(x=>x.id==pid||x.id===pid);
   if(!p) return;
-  const ranked=teams.map(t=>{const ms=getMProg(p.id,t.id);return{...t,total:ms.reduce((s,m)=>s+m.score,0)};}).filter(t=>t.total>0).sort((a,b)=>b.total-a.total);
+  const resultNo=progs.findIndex(x=>x.id==pid||x.id===pid)+1;
+  const ranked=teams.map(t=>{const ms=getMProg(p.id,t.id);return{...t,total:ms.reduce((s,m)=>s+m.score,0),cnt:ms.length};}).filter(t=>t.total>0).sort((a,b)=>b.total-a.total);
   const cat=cats.find(c=>c.id===p.catId);
-  const posterHTML=buildPosterHTML(p,ranked,cat,style,accent,eventName,org,dateStr);
-  const isDark=style==='gold'||style==='dark';
+  const posterHTML=buildPosterHTML(p,ranked,cat,opts,resultNo);
   const w=window.open('','_blank');
   w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${pname}</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Poppins:wght@400;500;600;700&family=Inter:wght@400;600;700&family=Manjari:wght@400;700&display=swap" rel="stylesheet">
-  <style>*{box-sizing:border-box;margin:0;padding:0}body{background:${isDark?'#111':'#eee'};display:flex;align-items:center;justify-content:center;min-height:100vh}
+  <style>*{box-sizing:border-box;margin:0;padding:0}body{background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh}
   .wrap{width:360px;border-radius:16px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3)}
   @media print{body{background:white}.wrap{box-shadow:none;width:100%;border-radius:0}}</style>
   </head><body><div class="wrap">${posterHTML}</div></body></html>`);

@@ -193,12 +193,77 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
 .bar4{background:linear-gradient(90deg,#00B4D8,#90E0EF)}.bar5{background:linear-gradient(90deg,#FF9F1C,#FFBF69)}
 .bar6{background:linear-gradient(90deg,#A8DADC,#CAF0F8)}.bar7{background:linear-gradient(90deg,#E63946,#FF758F)}
 .bar8{background:linear-gradient(90deg,#9B5DE5,#C77DFF)}.bar9{background:linear-gradient(90deg,#F72585,#FF85C8)}
-@media(max-width:768px){
-  .sidebar{transform:translateX(-100%)}.sidebar.open{transform:none}
-  .main-content{margin-left:0}.mob-menu-btn{display:flex!important}
-  .dash-stats{grid-template-columns:repeat(2,1fr)}
+/* ═══ RESPONSIVE ═══ */
+.sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(10,10,20,.5);z-index:99}
+.sidebar-backdrop.show{display:block;animation:fadeIn .2s ease}
+
+/* Laptop / small desktop */
+@media(max-width:1180px){
+  :root{--sidebar:200px}
+  .content-area{padding:18px}
+  .dash-stats{grid-template-columns:repeat(3,1fr)}
 }
-.mob-menu-btn{display:none;background:none;border:none;color:var(--text);font-size:1.3rem;cursor:pointer}
+
+/* Tablet */
+@media(max-width:900px){.dash-stats{grid-template-columns:repeat(2,1fr)}}
+
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%);width:250px;box-shadow:0 0 40px rgba(0,0,0,.35)}
+  .sidebar.open{transform:none}
+  .main-content{margin-left:0}
+  .mob-menu-btn{display:flex!important}
+  .dash-stats{grid-template-columns:repeat(2,1fr);gap:10px}
+  .topbar{padding:0 14px;height:54px}
+  .topbar-title,#topbarTitle{font-size:1.02rem!important;letter-spacing:1px!important}
+  .topbar-time{display:none}
+  .content-area{padding:14px}
+  .card{padding:16px;border-radius:14px;margin-bottom:14px}
+  .card-title{font-size:1rem;letter-spacing:1px;gap:8px}
+  .prog-header{gap:8px}
+  .prog-header h2{font-size:1.25rem}
+  .modal-box{padding:18px;border-radius:16px;max-width:calc(100% - 20px);max-height:94vh}
+  .modal-title{font-size:1.05rem;margin-bottom:14px}
+  .modal-actions{flex-wrap:wrap}
+  .modal-actions .btn{flex:1;min-width:110px}
+  .nav-item{padding:11px 18px;font-size:.88rem}
+  .teams-grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+  /* horizontally scrollable tables instead of overflow/clip */
+  .lb-table,.mem-table,.card table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap}
+  .lb-table thead,.mem-table thead{display:table-header-group}
+  .btn{padding:9px 14px;font-size:.82rem}
+  .dstat{padding:14px}
+  .dstat .ds-val{font-size:1.6rem}
+}
+
+@media(max-width:480px){
+  .dash-stats{grid-template-columns:repeat(2,1fr);gap:8px}
+  .dstat{padding:12px;border-radius:12px}
+  .dstat .ds-icon{font-size:1.3rem;margin-bottom:5px}
+  .dstat .ds-val{font-size:1.35rem}
+  .dstat .ds-lbl{font-size:.6rem}
+  .content-area{padding:10px}
+  .card{padding:13px;border-radius:12px}
+  .card-title{font-size:.92rem}
+  .prog-header{flex-direction:column;align-items:stretch}
+  .prog-header h2{font-size:1.1rem}
+  .prog-header>div{width:100%}
+  .prog-header .btn,.prog-header select{flex:1}
+  .teams-grid{grid-template-columns:1fr}
+  #templateGrid{grid-template-columns:1fr!important}
+  .login-box{padding:28px 20px;border-radius:20px}
+  .modal-box{padding:14px}
+  .modal-actions{flex-direction:column-reverse;gap:8px}
+  .modal-actions .btn{width:100%;flex:none}
+  .btn-sm{padding:7px 12px}
+  .topbar-title,#topbarTitle{font-size:.92rem!important}
+}
+
+@media(max-width:360px){
+  .dash-stats{grid-template-columns:1fr 1fr}
+  .sidebar-logo img{height:24px}
+}
+.mob-menu-btn{display:none;background:none;border:none;color:var(--text);font-size:1.3rem;cursor:pointer;padding:6px;border-radius:8px}
+.mob-menu-btn:active{background:rgba(20,20,40,.08)}
 </style>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -310,10 +375,11 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
   </div>
 
   <!-- MAIN -->
+  <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeSidebar()"></div>
   <div class="main-content">
     <div class="topbar">
       <div style="display:flex;align-items:center;gap:10px">
-        <button class="mob-menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+        <button class="mob-menu-btn" onclick="toggleSidebar()">☰</button>
         <div style="font-family:'Montserrat','Manjari',sans-serif;font-size:1.2rem;letter-spacing:2px" id="topbarTitle">DASHBOARD</div>
       </div>
       <div class="topbar-right">
@@ -1449,6 +1515,17 @@ function updateClock(){
 }
 
 // ═══ NAV ═══
+function toggleSidebar(){
+  const open=document.getElementById('sidebar')?.classList.toggle('open');
+  document.getElementById('sidebarBackdrop')?.classList.toggle('show',open);
+  document.body.style.overflow=open?'hidden':'';
+}
+function closeSidebar(){
+  document.getElementById('sidebar')?.classList.remove('open');
+  document.getElementById('sidebarBackdrop')?.classList.remove('show');
+  document.body.style.overflow='';
+}
+
 function showPage(pg){
   document.body.setAttribute('data-current-page', pg);
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -1457,8 +1534,8 @@ function showPage(pg){
   if(pel) pel.classList.add('active');
   const T={dashboard:'DASHBOARD',programs:'COMPETITION',registration:'REGISTRATION',participants:'PARTICIPANTS',teams:'TEAMS',results:'RESULTS',liveresults:'LIVE RESULTS',home:'HOME PAGE',announcements:'ANNOUNCEMENTS',leaderboard:'LEADERBOARD',gallery:'GALLERY',publish:'PUBLISH',templates:'TEMPLATES',qrcards:'QR CARDS',attendance:'ATTENDANCE',awards:'AWARDS',markentry:'MARK ENTRY',analytics:'ANALYTICS',history:'HISTORY',settings:'SETTINGS'};
   document.getElementById('topbarTitle').textContent=T[pg]||pg.toUpperCase();
-  document.querySelectorAll('.nav-item').forEach(n=>{if(n.textContent.toLowerCase().includes(pg.toLowerCase().slice(0,4)))n.classList.add('active')});
-  document.getElementById('sidebar')?.classList.remove('open');
+  document.querySelector(`.nav-item[data-page="${pg}"]`)?.classList.add('active');
+  closeSidebar();
   if(pg==='dashboard') renderDash();
   if(pg==='programs') renderProgs();
   if(pg==='teams') renderTeams();
@@ -1483,7 +1560,6 @@ function showPage(pg){
     if(!isAdmin){showToast('Admin access only!',true);showPage('dashboard');return;}
     renderSettings();
   }
-  document.getElementById('sidebar').classList.remove('open');
 }
 
 // ═══ HELPERS ═══

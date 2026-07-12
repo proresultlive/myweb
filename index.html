@@ -2989,6 +2989,9 @@ function generatePublicHTML() {
   const ANN_COL = {info:'#247DE133',important:'#FFA50033',result:'#FFD70033',schedule:'#00E57A33'};
   const ANN_BOR = {info:'#247DE155',important:'#FFA50055',result:'#FFD70055',schedule:'#00E57A55'};
 
+  // Total published results (programs with at least one recorded score)
+  const doneProgsCount = progs.filter(p => teams.some(t => getMProg(p.id, t.id).length > 0)).length;
+
   // Overall standings
   const standings = teams.map((t,i) => {
     let total = 0;
@@ -3022,6 +3025,7 @@ function generatePublicHTML() {
         <div class="stat-box"><div class="stat-val" style="color:${accent2}">${progs.length}</div><div class="stat-lbl">PROGRAMS</div></div>
         <div class="stat-box"><div class="stat-val" style="color:${accent2}">${parts.length}</div><div class="stat-lbl">PARTICIPANTS</div></div>
         <div class="stat-box"><div class="stat-val" style="color:${accent2}">${cats.length}</div><div class="stat-lbl">CATEGORIES</div></div>
+        <div class="stat-box"><div class="stat-val" style="color:${accent2}">${doneProgsCount}</div><div class="stat-lbl">RESULTS</div></div>
       </div>
       ${d.desc ? `<div class="card"><p class="desc-text">${esc(d.desc)}</p></div>` : ''}
       ${d.contact ? `<div style="text-align:center;padding:10px 0;font-size:.75rem;color:#888;font-family:'Inter','Manjari',sans-serif">${esc(d.contact)}</div>` : ''}
@@ -3145,9 +3149,7 @@ function generatePublicHTML() {
   let progResultsSec = '';
   if (incProgResults && progs.length) {
     navLinks.push(`<a href="#program-results" class="nav-link">Program Results</a>`);
-    progResultsSec = `<section id="program-results" class="section">
-      <h2 class="sec-title">🧑‍🤝‍🧑 Program-wise Results</h2>
-      ${progs.map(prog => {
+    const progBlocks = progs.map(prog => {
         const cat = cats.find(c => c.id === prog.catId);
         // collect all scored members across teams for this program
         let entries = [];
@@ -3163,8 +3165,8 @@ function generatePublicHTML() {
           });
         });
         entries.sort((a,b) => b.score - a.score);
-        if (!entries.length) return '';
-        return `<div class="cat-block">
+        if (!entries.length) return null;
+        return { catId: String(prog.catId || ''), html: `<div class="cat-block" data-cat="${esc(String(prog.catId || ''))}">
           <div class="cat-title">${esc(prog.name)}${cat ? ' <span style="color:#666;font-weight:400">· '+esc(cat.name)+'</span>' : ''}</div>
           <div class="lb-wrap">
             ${entries.map((e,i) => `<div class="lb-row${i<3?' lb-top'+(i+1):''}">
@@ -3173,8 +3175,25 @@ function generatePublicHTML() {
               ${incScores ? `<span class="lb-pts" style="color:${accent2}">${e.score}</span>` : ''}
             </div>`).join('')}
           </div>
-        </div>`;
-      }).join('')}
+        </div>` };
+      }).filter(Boolean);
+    const publishedCount = progBlocks.length;
+    // only show chips for categories that actually have published results
+    const catsWithResults = cats.filter(c => progBlocks.some(b => b.catId === String(c.id)));
+    const chipsHtml = catsWithResults.length ? `<div class="cat-chips-wrap">
+        <button class="pr-chip active" data-chip-cat="all" onclick="filterProgResults('all',this)">All <span class="pr-chip-count">${publishedCount}</span></button>
+        ${catsWithResults.map(c => {
+          const n = progBlocks.filter(b => b.catId === String(c.id)).length;
+          return `<button class="pr-chip" data-chip-cat="${esc(String(c.id))}" onclick="filterProgResults('${esc(String(c.id))}',this)">${esc(c.name)} <span class="pr-chip-count">${n}</span></button>`;
+        }).join('')}
+      </div>` : '';
+    progResultsSec = `<section id="program-results" class="section">
+      <h2 class="sec-title">🧑‍🤝‍🧑 Program-wise Results <span style="color:${accent2};font-size:.7rem;font-weight:400;letter-spacing:1px">· ${publishedCount} Published</span></h2>
+      ${chipsHtml}
+      <div id="progResultsList">
+        ${progBlocks.length ? progBlocks.map(b => b.html).join('') : `<div class="empty-msg">No results published yet.</div>`}
+      </div>
+      <div id="progResultsEmpty" class="empty-msg" style="display:none">No results published in this category yet.</div>
     </section>`;
   }
 
@@ -3266,10 +3285,17 @@ function generatePublicHTML() {
     .hero-meta span { font-size: .72rem; color: rgba(255,255,255,.65); font-family: 'Inter', 'Manjari', sans-serif; }
 
     /* STATS */
-    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 16px; }
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(76px, 1fr)); gap: 8px; padding: 16px; }
     .stat-box { background: rgba(255,255,255,.05); border-radius: 10px; padding: 12px; text-align: center; }
     .stat-val { font-family: 'Montserrat', 'Manjari', sans-serif; font-size: 1.6rem; line-height: 1; }
     .stat-lbl { font-size: .58rem; color: var(--muted); font-family: 'Inter', 'Manjari', sans-serif; letter-spacing: 1px; margin-top: 3px; }
+
+    /* CATEGORY FILTER CHIPS */
+    .cat-chips-wrap { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 16px; }
+    .pr-chip { padding: 7px 14px; border-radius: 20px; border: 1px solid var(--border); background: var(--dark3); color: var(--muted); font-size: .78rem; cursor: pointer; font-family: 'Inter', 'Manjari', sans-serif; letter-spacing: .3px; transition: all .15s; }
+    .pr-chip:hover { border-color: rgba(255,255,255,.3); color: var(--text); }
+    .pr-chip.active { background: ${primary}22; border-color: ${primary}; color: var(--text); }
+    .pr-chip-count { opacity: .6; font-size: .7rem; }
 
     /* SECTIONS */
     .section { max-width: 680px; margin: 0 auto; padding: 20px 16px 8px; }
@@ -3356,7 +3382,7 @@ function generatePublicHTML() {
     /* FOOTER */
     .page-footer { text-align: center; padding: 28px 16px; margin-top: 20px; border-top: 1px solid var(--border); font-size: .65rem; color: var(--muted); font-family: 'Inter', 'Manjari', sans-serif; letter-spacing: 1px; }
 
-    @media (max-width: 480px) { .stats-row { grid-template-columns: repeat(2,1fr); } .leader-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 480px) { .leader-grid { grid-template-columns: 1fr 1fr; } }
   </style>
 </head>
 <body>
@@ -3395,6 +3421,20 @@ function generatePublicHTML() {
     POWERED BY PRORESULT &nbsp;·&nbsp; DEZIGN HUB 2026 &nbsp;·&nbsp; Last updated: ${lastUpdated}
   </footer>
   <script>
+    function filterProgResults(catId, btn) {
+      document.querySelectorAll('.pr-chip').forEach(c => c.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      const blocks = document.querySelectorAll('#progResultsList .cat-block');
+      let visible = 0;
+      blocks.forEach(b => {
+        const match = catId === 'all' || b.getAttribute('data-cat') === catId;
+        b.style.display = match ? '' : 'none';
+        if (match) visible++;
+      });
+      const emptyMsg = document.getElementById('progResultsEmpty');
+      if (emptyMsg) emptyMsg.style.display = visible === 0 ? 'block' : 'none';
+    }
+
     function searchByChest() {
       const input = document.getElementById('chestSearchInput');
       const box = document.getElementById('searchResultBox');

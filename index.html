@@ -584,8 +584,16 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
               <!-- Design -->
               <div class="card">
                 <div class="card-title">DESIGN</div>
-                <div class="form-field" style="margin-bottom:0"><label>ACCENT COLOR</label>
+                <div class="form-field" style="margin-bottom:12px"><label>ACCENT COLOR</label>
                   <input type="color" id="spAccent" value="#d97a3f" oninput="refreshStudentPoster()" style="height:40px;width:100%;border-radius:10px;border:1px solid rgba(255,255,255,.1);cursor:pointer">
+                </div>
+                <div class="form-field" style="margin-bottom:0"><label>LOGO (shown instead of the initial letter)</label>
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <div id="spLogoPreview" style="width:40px;height:40px;border-radius:12px;overflow:hidden;flex-shrink:0;background:var(--dark4);display:flex;align-items:center;justify-content:center;font-size:.65rem;color:var(--muted)">—</div>
+                    <input type="file" id="spLogoUpload" accept="image/*" style="display:none" onchange="uploadPosterLogo(this,'student')">
+                    <button class="btn btn-outline btn-sm" style="flex:1" onclick="document.getElementById('spLogoUpload').click()">Upload Logo</button>
+                    <button class="btn btn-outline btn-sm" onclick="removePosterLogo('student')">✕</button>
+                  </div>
                 </div>
               </div>
 
@@ -653,6 +661,14 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
               </div>
               <div class="form-field" style="margin:0"><label>ACCENT COLOR</label>
                 <input type="color" id="tplAccent" value="#e8d84a" style="height:40px;width:100%;border-radius:10px;border:1px solid rgba(255,255,255,.1);cursor:pointer" onchange="renderTemplateGrid()">
+              </div>
+              <div class="form-field" style="margin:0"><label>LOGO (shown instead of the initial letter)</label>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <div id="tplLogoPreview" style="width:34px;height:34px;border-radius:10px;overflow:hidden;flex-shrink:0;background:var(--dark4);display:flex;align-items:center;justify-content:center;font-size:.6rem;color:var(--muted)">—</div>
+                  <input type="file" id="tplLogoUpload" accept="image/*" style="display:none" onchange="uploadPosterLogo(this,'template')">
+                  <button class="btn btn-outline btn-sm" style="flex:1;font-size:.72rem" onclick="document.getElementById('tplLogoUpload').click()">Upload</button>
+                  <button class="btn btn-outline btn-sm" style="font-size:.72rem" onclick="removePosterLogo('template')">✕</button>
+                </div>
               </div>
             </div>
             <div class="form-field" style="margin:12px 0 0"><label>DESCRIPTION (shown at the bottom of the poster)</label>
@@ -1277,7 +1293,7 @@ function ld(k,d){
 function sd(k,v){
   localStorage.setItem(k,JSON.stringify(v));
   fbData[k] = v;
-  if (k === 'pr_gallery') return; // gallery photos stay local-only (Firestore 1MB doc limit)
+  if (k === 'pr_gallery' || k === 'pr_poster_logo') return; // stay local-only (Firestore 1MB doc limit)
   pushToFirestore(k, v);
 }
 function pushToFirestore(key, value) {
@@ -2268,7 +2284,37 @@ function initStudentPoster() {
       progs.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join('');
     if (cur) progSel.value = cur;
   }
+  renderPosterLogoPreviews();
   refreshStudentPoster();
+}
+
+// ═══ POSTER LOGO (shared by Student Poster & Program Result Poster) ═══
+let posterLogo = ld('pr_poster_logo', '');
+function uploadPosterLogo(input, from) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    posterLogo = e.target.result;
+    sd('pr_poster_logo', posterLogo);
+    renderPosterLogoPreviews();
+    if (from === 'student') refreshStudentPoster(); else renderTemplateGrid();
+    showToast('Logo added ✓');
+  };
+  reader.readAsDataURL(file);
+}
+function removePosterLogo(from) {
+  posterLogo = '';
+  sd('pr_poster_logo', posterLogo);
+  renderPosterLogoPreviews();
+  if (from === 'student') refreshStudentPoster(); else renderTemplateGrid();
+}
+function renderPosterLogoPreviews() {
+  ['spLogoPreview', 'tplLogoPreview'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = posterLogo ? `<img src="${posterLogo}" style="width:100%;height:100%;object-fit:cover">` : '—';
+  });
 }
 
 function getTop3ForProgram(progId) {
@@ -2328,7 +2374,7 @@ function buildStudentPosterHTML() {
     <img src="${STUDY_ICON_URI}" style="position:absolute;right:36px;bottom:150px;width:220px;height:auto;z-index:0;opacity:.92" alt="">
     <div style="position:relative;z-index:1">
     <div style="display:flex;align-items:center;gap:20px;margin-bottom:6px">
-      <div style="width:64px;height:64px;border-radius:50%;border:2px solid ${accent};display:flex;align-items:center;justify-content:center;font-family:'Montserrat','Manjari',sans-serif;font-weight:700;font-size:1.6rem;color:${accent};flex-shrink:0">${esc(initial)}</div>
+      <div style="width:64px;height:64px;border-radius:16px;border:2px solid ${accent};overflow:hidden;display:flex;align-items:center;justify-content:center;font-family:'Montserrat','Manjari',sans-serif;font-weight:700;font-size:1.6rem;color:${accent};flex-shrink:0">${posterLogo?`<img src="${posterLogo}" style="width:100%;height:100%;object-fit:cover">`:esc(initial)}</div>
       <div style="min-width:0">
         <div style="font-family:'Montserrat','Manjari',sans-serif;font-size:2rem;font-weight:800;letter-spacing:.5px;color:#1a1a1a;line-height:1.15;word-break:break-word">${esc(eventName)}</div>
       </div>
@@ -2439,6 +2485,7 @@ function printStudentPoster() {
 
 // ── PROGRAM RESULT POSTER (existing) ──
 function renderTemplateGrid(){
+  renderPosterLogoPreviews();
   const sel=document.getElementById('tplProgSel');
   if(sel){
     const cur=sel.value;
@@ -2502,7 +2549,7 @@ function buildPosterHTML(p, ranked, cat, opts, resultNo){
     ${opts.edition?`<div style="position:absolute;left:-38px;top:50%;transform:translateY(-50%) rotate(-90deg);font-family:'Inter','Manjari',sans-serif;font-size:.58rem;letter-spacing:2px;color:rgba(255,255,255,.25);white-space:nowrap;z-index:0">${esc(opts.eventName)} &nbsp;|&nbsp; ${esc(opts.edition)}</div>`:''}
     <div style="position:relative;z-index:1">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
-        <div style="width:34px;height:34px;border-radius:50%;border:1.5px solid ${accent};display:flex;align-items:center;justify-content:center;font-family:'Montserrat','Manjari',sans-serif;font-weight:700;font-size:.9rem;color:${accent};flex-shrink:0">${esc(initial)}</div>
+        <div style="width:34px;height:34px;border-radius:9px;border:1.5px solid ${accent};overflow:hidden;display:flex;align-items:center;justify-content:center;font-family:'Montserrat','Manjari',sans-serif;font-weight:700;font-size:.9rem;color:${accent};flex-shrink:0">${posterLogo?`<img src="${posterLogo}" style="width:100%;height:100%;object-fit:cover">`:esc(initial)}</div>
         <div style="min-width:0">
           <div style="font-family:'Montserrat','Manjari',sans-serif;font-size:1.05rem;font-weight:700;letter-spacing:.5px;color:#fff;line-height:1.15;word-break:break-word">${esc(opts.eventName)}</div>
           ${opts.edition?`<div style="font-family:'Inter','Manjari',sans-serif;font-size:.62rem;letter-spacing:2px;color:${accent};margin-top:1px">${esc(opts.edition.toUpperCase())}</div>`:''}

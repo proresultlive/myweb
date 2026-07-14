@@ -683,22 +683,22 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
             <div class="card-title">CUSTOMIZE</div>
             <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px">
               <div class="form-field" style="margin:0"><label>EVENT / FESTIVAL NAME</label>
-                <input class="form-input" id="tplEventName" placeholder="Annual Arts Fest 2026" value="Annual Arts Fest 2026">
+                <input class="form-input" id="tplEventName" placeholder="Annual Arts Fest 2026" value="Annual Arts Fest 2026" oninput="saveTplOpts();renderTemplateGrid()">
               </div>
               <div class="form-field" style="margin:0"><label>EDITION (optional)</label>
-                <input class="form-input" id="tplEdition" placeholder="e.g. 33rd Edition">
+                <input class="form-input" id="tplEdition" placeholder="e.g. 33rd Edition" oninput="saveTplOpts();renderTemplateGrid()">
               </div>
               <div class="form-field" style="margin:0"><label>ORGANIZER</label>
-                <input class="form-input" id="tplOrg" placeholder="School / Division Name">
+                <input class="form-input" id="tplOrg" placeholder="School / Division Name" oninput="saveTplOpts();renderTemplateGrid()">
               </div>
               <div class="form-field" style="margin:0"><label>DATE</label>
-                <input class="form-input" id="tplDate" type="date">
+                <input class="form-input" id="tplDate" type="date" onchange="saveTplOpts();renderTemplateGrid()">
               </div>
               <div class="form-field" style="margin:0"><label>VENUE</label>
-                <input class="form-input" id="tplVenue" placeholder="e.g. Kodur East">
+                <input class="form-input" id="tplVenue" placeholder="e.g. Kodur East" oninput="saveTplOpts();renderTemplateGrid()">
               </div>
               <div class="form-field" style="margin:0"><label>ACCENT COLOR</label>
-                <input type="color" id="tplAccent" value="#e8d84a" style="height:40px;width:100%;border-radius:10px;border:1px solid rgba(255,255,255,.1);cursor:pointer" onchange="renderTemplateGrid()">
+                <input type="color" id="tplAccent" value="#e8d84a" style="height:40px;width:100%;border-radius:10px;border:1px solid rgba(255,255,255,.1);cursor:pointer" onchange="saveTplOpts();renderTemplateGrid()">
               </div>
               <div class="form-field" style="margin:0"><label>LOGO (shown instead of the initial letter)</label>
                 <div style="display:flex;align-items:center;gap:8px">
@@ -710,10 +710,10 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
               </div>
             </div>
             <div class="form-field" style="margin:12px 0 0"><label>DESCRIPTION (shown at the bottom of the poster)</label>
-              <textarea class="form-input" id="tplDesc" rows="2" placeholder="Short note about the event / organizer..." onchange="renderTemplateGrid()"></textarea>
+              <textarea class="form-input" id="tplDesc" rows="2" placeholder="Short note about the event / organizer..." onchange="saveTplOpts();renderTemplateGrid()"></textarea>
             </div>
             <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
-              <button class="btn btn-primary btn-sm" onclick="renderTemplateGrid()">Update Posters</button>
+              <button class="btn btn-primary btn-sm" onclick="saveTplOpts();renderTemplateGrid()">Update Posters</button>
               <select class="form-input" id="tplProgSel" onchange="renderTemplateGrid()" style="max-width:220px;padding:7px 12px">
                 <option value="all">All Programs</option>
               </select>
@@ -942,7 +942,7 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
             </label>
             <label style="display:flex;align-items:center;gap:10px;cursor:pointer;background:var(--dark3);border-radius:10px;padding:12px;border:1px solid rgba(255,255,255,.06)">
               <input type="checkbox" id="pubPosters" style="accent-color:var(--accent);width:16px;height:16px">
-              <div><div style="font-size:.85rem;font-weight:600">🏆 Posters</div><div style="font-size:.7rem;color:var(--muted)">Student result cards (downloadable)</div></div>
+              <div><div style="font-size:.85rem;font-weight:600">🎓 Student Posters</div><div style="font-size:.7rem;color:var(--muted)">Individual student winner posters per program (downloadable)</div></div>
             </label>
           </div>
         </div>
@@ -2365,7 +2365,7 @@ function switchTplTab(tab) {
   document.getElementById('tplTabStudent').className = 'btn btn-sm ' + (tab === 'student' ? 'btn-primary' : 'btn-outline');
   document.getElementById('tplTabProgram').className = 'btn btn-sm ' + (tab === 'program' ? 'btn-primary' : 'btn-outline');
   document.getElementById('tplTabCustom').className = 'btn btn-sm ' + (tab === 'custom' ? 'btn-primary' : 'btn-outline');
-  if (tab === 'program') renderTemplateGrid();
+  if (tab === 'program') { applyTplOptsToDOM(); renderTemplateGrid(); }
   if (tab === 'student') initStudentPoster();
   if (tab === 'custom') initCustomDesign();
 }
@@ -2382,6 +2382,33 @@ function initStudentPoster() {
   renderPosterLogoPreviews();
   refreshStudentPoster();
 }
+
+// ═══ PROGRAM POSTER TEMPLATE OPTIONS (persisted so Publish page can reuse them) ═══
+let posterTplOpts = ld('pr_poster_tpl', {eventName:'Annual Arts Fest 2026', edition:'', org:'', venue:'', desc:'', accent:'#e8d84a', date:''});
+function saveTplOpts(){
+  posterTplOpts = {
+    eventName: document.getElementById('tplEventName')?.value || 'Competition 2026',
+    edition: document.getElementById('tplEdition')?.value || '',
+    org: document.getElementById('tplOrg')?.value || '',
+    date: document.getElementById('tplDate')?.value || '',
+    venue: document.getElementById('tplVenue')?.value || '',
+    accent: document.getElementById('tplAccent')?.value || '#e8d84a',
+    desc: document.getElementById('tplDesc')?.value || ''
+  };
+  sd('pr_poster_tpl', posterTplOpts);
+}
+function applyTplOptsToDOM(){
+  const o = posterTplOpts;
+  const set=(id,val)=>{const el=document.getElementById(id); if(el) el.value = val || '';};
+  set('tplEventName', o.eventName);
+  set('tplEdition', o.edition);
+  set('tplOrg', o.org);
+  set('tplDate', o.date);
+  set('tplVenue', o.venue);
+  set('tplAccent', o.accent || '#e8d84a');
+  set('tplDesc', o.desc);
+}
+applyTplOptsToDOM();
 
 // ═══ POSTER LOGO (shared by Student Poster & Program Result Poster) ═══
 let posterLogo = ld('pr_poster_logo', '');
@@ -2880,6 +2907,58 @@ function buildStudentPosterHTML() {
   </div>`;
 }
 
+function buildStudentPosterHTMLFor(prog, winners, cat, opts, resultNo) {
+  const eventName = opts.eventName || 'Event 2026';
+  const org = opts.org || '';
+  const dateStr = opts.dateStr || '';
+  const accent = opts.accent || '#d97a3f';
+  const desc = opts.desc || '';
+  const metaLine = [dateStr, org].filter(Boolean).join('  ·  ');
+  const initial = (org || eventName || 'P').trim().charAt(0).toUpperCase();
+
+  return `<div style="position:relative;overflow:hidden;background:#fdfcf9;font-family:'Poppins',sans-serif;width:1051px;height:1280px;box-sizing:border-box;padding:64px 56px 48px;color:#222">
+    <img src="${STUDY_ICON_URI}" style="position:absolute;right:36px;bottom:150px;width:220px;height:auto;z-index:0;opacity:.92" alt="">
+    <div style="position:relative;z-index:1">
+    <div style="display:flex;align-items:center;gap:20px;margin-bottom:6px">
+      <div style="width:64px;height:64px;border-radius:16px;border:2px solid ${accent};overflow:hidden;display:flex;align-items:center;justify-content:center;font-family:'Montserrat','Manjari',sans-serif;font-weight:700;font-size:1.6rem;color:${accent};flex-shrink:0">${posterLogo?`<img src="${posterLogo}" style="width:100%;height:100%;object-fit:cover">`:esc(initial)}</div>
+      <div style="min-width:0">
+        <div style="font-family:'Montserrat','Manjari',sans-serif;font-size:2rem;font-weight:800;letter-spacing:.5px;color:#1a1a1a;line-height:1.15;word-break:break-word">${esc(eventName)}</div>
+      </div>
+    </div>
+    ${metaLine ? `<div style="font-family:'Inter','Manjari',sans-serif;font-size:1.1rem;color:#888;letter-spacing:.5px;margin:10px 0 0 84px">${esc(metaLine)}</div>` : ''}
+
+    <div style="border-top:2px solid #eee;margin:38px 0 34px"></div>
+
+    <div style="display:flex;align-items:flex-start;gap:20px;margin-bottom:44px">
+      <div style="font-family:'Montserrat','Manjari',sans-serif;font-size:6rem;font-weight:300;color:#e5e2d8;line-height:1;flex-shrink:0">${resultNo||''}</div>
+      <div style="padding-top:14px;min-width:0">
+        <div style="font-family:'Inter','Manjari',sans-serif;font-size:1.15rem;letter-spacing:3px;color:#999">${cat?esc(cat.name.toUpperCase()):'RESULT'}</div>
+        <div style="font-family:'Montserrat','Manjari',sans-serif;font-size:2.9rem;font-weight:800;color:${accent};line-height:1.15;margin-top:6px;word-break:break-word">${prog?esc(prog.name):'Select a Program'}</div>
+      </div>
+    </div>
+
+    ${winners.length===0?`<div style="text-align:center;padding:60px 10px;color:#aaa;font-size:1.3rem">No scores yet for this program</div>`:`
+    <div style="display:flex;flex-direction:column;gap:22px">
+      ${winners.map((w,i)=>`<div style="display:flex;align-items:center;gap:22px;background:#f6f5f1;border-radius:18px;padding:18px 26px">
+        <div style="width:52px;height:52px;border-radius:50%;background:${i===0?accent:'#dcdad2'};color:${i===0?'#fff':'#666'};display:flex;align-items:center;justify-content:center;font-family:'Montserrat','Manjari',sans-serif;font-weight:800;font-size:1.5rem;flex-shrink:0">${i+1}</div>
+        <div style="min-width:0;flex:1">
+          <div style="font-family:'Montserrat','Manjari',sans-serif;font-size:1.55rem;font-weight:800;color:#1a1a1a;word-break:break-word">${esc(w.name)}</div>
+          <div style="font-family:'Inter','Manjari',sans-serif;font-size:1.05rem;color:#888;margin-top:2px">${esc(w.teamName)}${w.chest?' · #'+esc(w.chest):''}</div>
+        </div>
+        <div style="font-family:'Montserrat','Manjari',sans-serif;font-size:1.4rem;font-weight:700;color:${accent};flex-shrink:0">${w.score}</div>
+      </div>`).join('')}
+    </div>`}
+
+    ${desc?`<div style="margin-top:44px;font-size:1rem;line-height:1.7;color:#999">${esc(desc)}</div>`:''}
+    </div>
+
+    <div style="position:absolute;left:56px;right:56px;bottom:44px;padding-top:20px;border-top:2px solid #eee;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;z-index:1">
+      <div style="font-size:1rem;letter-spacing:1px;color:#999">${org?'ORGANIZED BY <span style=\"color:#444;font-weight:700\">'+esc(org)+'</span>':''}</div>
+      <div style="font-size:.85rem;letter-spacing:1px;color:#bbb">PRORESULT · DEZIGN HUB</div>
+    </div>
+  </div>`;
+}
+
 function downloadStudentPoster() {
   const posterHTML = buildStudentPosterHTML();
   const w = window.open('', '_blank');
@@ -2980,14 +3059,15 @@ function renderTemplateGrid(){
 }
 
 function getTplOpts(){
-  const dateVal=document.getElementById('tplDate')?.value;
+  const o = posterTplOpts || {};
+  const dateVal=document.getElementById('tplDate')?.value || o.date;
   return {
-    eventName:document.getElementById('tplEventName')?.value||'Competition 2026',
-    edition:document.getElementById('tplEdition')?.value||'',
-    org:document.getElementById('tplOrg')?.value||'',
-    venue:document.getElementById('tplVenue')?.value||'',
-    desc:document.getElementById('tplDesc')?.value||'',
-    accent:document.getElementById('tplAccent')?.value||'#e8d84a',
+    eventName:document.getElementById('tplEventName')?.value || o.eventName || 'Competition 2026',
+    edition:document.getElementById('tplEdition')?.value || o.edition || '',
+    org:document.getElementById('tplOrg')?.value || o.org || '',
+    venue:document.getElementById('tplVenue')?.value || o.venue || '',
+    desc:document.getElementById('tplDesc')?.value || o.desc || '',
+    accent:document.getElementById('tplAccent')?.value || o.accent || '#e8d84a',
     dateStr:dateVal?new Date(dateVal).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})
   };
 }
@@ -3792,69 +3872,27 @@ function generatePublicHTML() {
   }
 
   if (incPosters) {
-    // Collect all participants with results
-    const allParticipants = [];
-    teams.forEach(t => {
-      progs.forEach(p => {
-        const members = getMProg(p.id, t.id);
-        members.forEach(m => {
-          const existing = allParticipants.find(a => a.name === m.name && a.teamId === t.id);
-          if (!existing) {
-            const part = parts.find(pt => pt.name === m.name);
-            allParticipants.push({
-              name: m.name,
-              teamId: t.id,
-              teamName: t.name,
-              chest: part ? part.chest : '',
-              score: m.score,
-              progId: p.id,
-              progName: p.name
-            });
-          }
-        });
-      });
-    });
-    
-    if (allParticipants.length) {
+    // Use the Student Poster design (per-program individual student winners) for the Publish page
+    const tplOpts = getTplOpts();
+    const posterProgs = progs.map(p => {
+      const winners = getTop3ForProgram(p.id);
+      const cat = cats.find(c => c.id === p.catId);
+      return {p, winners, cat};
+    }).filter(x => x.winners.length > 0);
+
+    if (posterProgs.length) {
       navLinks.push(`<a href="#posters" class="nav-link">Posters</a>`);
-      const tplOpts = {
-        eventName: d.title || 'Competition 2026',
-        edition: '',
-        org: d.subtitle || '',
-        venue: '',
-        desc: '',
-        accent: accent2,
-        dateStr: dateStr
-      };
       postersSec = `<section id="posters" class="section">
-        <h2 class="sec-title">🏆 Result Posters <span style="color:${accent2};font-size:.7rem;font-weight:400;letter-spacing:1px">· ${allParticipants.length} Certificates</span></h2>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:16px">
-          ${allParticipants.map((p,idx) => {
-            const accent = tplOpts.accent || '#1A5FB4';
-            const initial = (tplOpts.org || tplOpts.eventName || 'P').trim().charAt(0).toUpperCase();
-            return `<div style="background:var(--dark3);border:1px solid rgba(255,255,255,.07);border-radius:12px;overflow:hidden;cursor:pointer;transition:all .15s">
-              <div id="poster-pub-${idx}" style="min-height:260px;background:linear-gradient(135deg,#15161c 0%,#1a1a24 100%);font-family:'Poppins',sans-serif;padding:20px;color:#eee;display:flex;flex-direction:column;justify-content:space-between">
-                <div>
-                  <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:12px">
-                    <div style="width:48px;height:48px;border-radius:8px;border:2px solid ${accent};overflow:hidden;display:flex;align-items:center;justify-content:center;font-family:'Montserrat',sans-serif;font-weight:700;font-size:1.2rem;color:${accent};flex-shrink:0;background:rgba(255,255,255,.02)">${posterLogo ? `<img src="${posterLogo}" style="width:100%;height:100%;object-fit:cover">` : initial}</div>
-                    <div>
-                      <div style="font-size:.95rem;font-weight:700;line-height:1.1">${esc(p.name)}</div>
-                      <div style="font-size:.7rem;color:#aaa;margin-top:2px">${esc(p.teamName)}</div>
-                      ${p.chest ? `<div style="font-size:.65rem;color:#888;font-family:'Manjari',sans-serif">Chest #${esc(p.chest)}</div>` : ''}
-                    </div>
-                  </div>
-                  <div style="font-size:.8rem;color:#999;line-height:1.4">${esc(p.progName)}</div>
-                </div>
-                <div>
-                  <div style="font-size:2rem;font-weight:800;color:${accent};font-family:'Montserrat',sans-serif">${p.score}</div>
-                  <div style="font-size:.65rem;color:#888;text-transform:uppercase;letter-spacing:1px;margin-top:4px">Points</div>
-                </div>
+        <h2 class="sec-title">🎓 Student Posters <span style="color:${accent2};font-size:.7rem;font-weight:400;letter-spacing:1px">· ${posterProgs.length} Program${posterProgs.length!==1?'s':''}</span></h2>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px;margin-top:16px">
+          ${posterProgs.map((x, idx) => `<div style="background:var(--dark3);border:1px solid rgba(255,255,255,.07);border-radius:16px;overflow:hidden">
+              <div style="width:100%;height:0;padding-bottom:121.8%;position:relative;overflow:hidden">
+                <div id="poster-pub-${idx}" style="position:absolute;top:0;left:0;width:1051px;height:1280px;transform:scale(.2807);transform-origin:top left">${buildStudentPosterHTMLFor(x.p, x.winners, x.cat, tplOpts, idx+1)}</div>
               </div>
-              <div style="padding:10px;border-top:1px solid rgba(255,255,255,.06);display:flex;gap:6px">
-                <button data-idx="${idx}" data-name="${esc(p.name)}" class="poster-dl-btn" style="flex:1;padding:6px;font-size:.72rem;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.04);color:var(--text);border-radius:6px;cursor:pointer;transition:all .15s;font-weight:500">📷 JPG</button>
+              <div style="padding:10px 12px;display:flex;gap:8px;border-top:1px solid rgba(255,255,255,.06)">
+                <button data-idx="${idx}" data-name="${esc(x.p.name)}" class="poster-dl-btn" style="flex:1;padding:6px;font-size:.74rem;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.04);color:var(--text);border-radius:6px;cursor:pointer;font-weight:500">📷 Download JPG</button>
               </div>
-            </div>`;
-          }).join('')}
+            </div>`).join('')}
         </div>
       </section>`;
     }

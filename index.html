@@ -3523,16 +3523,72 @@ function generatePublicHTML() {
   let homeSec = '', annSec = '', liveSec = '', leaderSec = '', gallerySec = '', postersSec = '';
   const navLinks = [];
 
+  // ── Shared search lookup (used inline in hero when Home is on, else as its own section) ──
+  let searchInnerHTML = '', searchDataScript = '';
+  if (incSearch && parts.length) {
+    navLinks.unshift(`<a href="#search" class="nav-link" style="color:${accent2}">🔍 Find My Result</a>`);
+    const lookup = {};
+    parts.forEach(p => {
+      const cat = cats.find(c => c.id === p.catId);
+      const ptTeam = teams.find(t => t.id == p.group);
+      lookup[p.chest] = { name: p.name, category: cat ? cat.name : '', group: ptTeam ? ptTeam.name : '', results: [] };
+    });
+    progs.forEach(prog => {
+      let entries = [];
+      teams.forEach(t => {
+        getMProg(prog.id, t.id).forEach(m => {
+          const part = parts.find(x => x.name === m.name);
+          entries.push({ chest: part ? part.chest : null, score: m.score, team: t.name });
+        });
+      });
+      entries.sort((a,b) => b.score - a.score);
+      let rank = 0, lastScore = null;
+      entries.forEach((e, i) => {
+        if (e.score !== lastScore) { rank = i + 1; lastScore = e.score; }
+        e.rank = rank;
+      });
+      entries.forEach(e => {
+        if (e.chest && lookup[e.chest]) {
+          lookup[e.chest].results.push({ program: prog.name, score: e.score, rank: e.rank, team: e.team });
+        }
+      });
+    });
+    searchDataScript = `<script>window.__prSearchData = ${JSON.stringify(lookup)};<\/script>`;
+    searchInnerHTML = `<div class="search-box-wrap">
+        <input type="text" id="chestSearchInput" class="search-input" placeholder="Enter Chest Number (e.g. 101)" inputmode="numeric">
+        <button class="search-btn" onclick="searchByChest()" style="background:${accent2}">Search</button>
+      </div>
+      <div id="searchResultBox"></div>`;
+  }
+
+  // ── Quick action pills shown in the hero (Home page) ──
+  const heroActions = [];
+  if (incLive) heroActions.push({ href: '#results', icon: '📡', label: 'Standings' });
+  if (incProgResults && progs.length) heroActions.push({ href: '#program-results', icon: '🏆', label: 'Results' });
+  if (incLeader && cats.length) heroActions.push({ href: '#leaderboard', icon: '📊', label: 'Leaderboard' });
+  if (incGallery && gallery.length) heroActions.push({ href: '#gallery', icon: '🖼', label: 'Gallery' });
+  if (incAnn && anns.length) heroActions.push({ href: '#announcements', icon: '📢', label: 'Announcements' });
+  const heroActionsHTML = heroActions.length ? `<div class="hero-actions">
+      ${heroActions.slice(0,4).map(a => `<a href="${a.href}" class="hero-action-btn">${a.icon} ${a.label}</a>`).join('')}
+    </div>` : '';
+
   if (incHome) {
     navLinks.push(`<a href="#home" class="nav-link">Home</a>`);
-    homeSec = `<section id="home" class="section">
-      <div class="hero" style="background:linear-gradient(135deg,${primary},${accent2}44)">
-        ${d.org ? `<div class="hero-sub">${esc(d.org)}</div>` : ''}
-        <h1 class="hero-title">${esc(d.title)||'EVENT'}</h1>
-        ${d.tagline ? `<p class="hero-tag">${esc(d.tagline)}</p>` : ''}
-        <div class="hero-meta">
-          ${dateStr ? `<span>📅 ${dateStr}</span>` : ''}
-          ${d.venue ? `<span>📍 ${esc(d.venue)}</span>` : ''}
+    homeSec = `<section id="home" class="section" style="padding-top:0">
+      <div class="hero">
+        <div class="hero-glow hero-glow1"></div>
+        <div class="hero-glow hero-glow2"></div>
+        <div class="hero-inner">
+          ${posterLogo ? `<img src="${posterLogo}" class="hero-logo">` : ''}
+          ${d.org ? `<div class="hero-sub">${esc(d.org)}</div>` : ''}
+          <h1 class="hero-title">${esc(d.title)||'EVENT'}</h1>
+          ${d.tagline ? `<p class="hero-tag">${esc(d.tagline)}</p>` : ''}
+          <div class="hero-meta">
+            ${dateStr ? `<span>📅 ${dateStr}</span>` : ''}
+            ${d.venue ? `<span>📍 ${esc(d.venue)}</span>` : ''}
+          </div>
+          ${heroActionsHTML}
+          ${searchInnerHTML ? `<div id="search" class="hero-search">${searchInnerHTML}</div>` : ''}
         </div>
       </div>
       <div class="stats-row">
@@ -3713,44 +3769,10 @@ function generatePublicHTML() {
   }
 
   let searchSec = '';
-  let searchDataScript = '';
-  if (incSearch && parts.length) {
-    navLinks.unshift(`<a href="#search" class="nav-link" style="color:${accent2}">🔍 Find My Result</a>`);
-    // Build a lookup: chest number -> { name, category, group, results: [{program, score, rank, team}] }
-    const lookup = {};
-    parts.forEach(p => {
-      const cat = cats.find(c => c.id === p.catId);
-      const ptTeam = teams.find(t => t.id == p.group);
-      lookup[p.chest] = { name: p.name, category: cat ? cat.name : '', group: ptTeam ? ptTeam.name : '', results: [] };
-    });
-    progs.forEach(prog => {
-      let entries = [];
-      teams.forEach(t => {
-        getMProg(prog.id, t.id).forEach(m => {
-          const part = parts.find(x => x.name === m.name);
-          entries.push({ chest: part ? part.chest : null, score: m.score, team: t.name });
-        });
-      });
-      entries.sort((a,b) => b.score - a.score);
-      let rank = 0, lastScore = null;
-      entries.forEach((e, i) => {
-        if (e.score !== lastScore) { rank = i + 1; lastScore = e.score; }
-        e.rank = rank;
-      });
-      entries.forEach(e => {
-        if (e.chest && lookup[e.chest]) {
-          lookup[e.chest].results.push({ program: prog.name, score: e.score, rank: e.rank, team: e.team });
-        }
-      });
-    });
-    searchDataScript = `<script>window.__prSearchData = ${JSON.stringify(lookup)};<\/script>`;
+  if (incSearch && parts.length && !incHome) {
     searchSec = `<section id="search" class="section">
       <h2 class="sec-title">🔍 Find My Result</h2>
-      <div class="search-box-wrap">
-        <input type="text" id="chestSearchInput" class="search-input" placeholder="Enter Chest Number (e.g. 101)" inputmode="numeric">
-        <button class="search-btn" onclick="searchByChest()" style="background:${accent2}">Search</button>
-      </div>
-      <div id="searchResultBox"></div>
+      ${searchInnerHTML}
     </section>`;
   }
 
@@ -3861,12 +3883,31 @@ function generatePublicHTML() {
     .nav-link:hover { color: var(--text); }
 
     /* HERO */
-    .hero { padding: 44px 20px 32px; text-align: center; }
-    .hero-sub { font-size: .65rem; letter-spacing: 3px; color: rgba(255,255,255,.6); font-family: 'Inter', 'Manjari', sans-serif; margin-bottom: 8px; }
+    .hero { position: relative; overflow: hidden; padding: 40px 20px 30px; text-align: center; background: linear-gradient(135deg, ${primary} 0%, ${accent2} 100%); }
+    .hero-glow { position: absolute; border-radius: 50%; pointer-events: none; }
+    .hero-glow1 { width: 70vw; max-width: 420px; height: 70vw; max-height: 420px; background: radial-gradient(circle, rgba(255,255,255,.18), transparent 70%); top: -20%; left: -15%; }
+    .hero-glow2 { width: 55vw; max-width: 340px; height: 55vw; max-height: 340px; background: radial-gradient(circle, rgba(0,0,0,.15), transparent 70%); bottom: -15%; right: -10%; }
+    .hero-inner { position: relative; z-index: 2; }
+    .hero-logo { width: 56px; height: 56px; border-radius: 14px; object-fit: cover; margin: 0 auto 14px; display: block; box-shadow: 0 6px 20px rgba(0,0,0,.25); }
+    .hero-sub { font-size: .65rem; letter-spacing: 3px; color: rgba(255,255,255,.7); font-family: 'Inter', 'Manjari', sans-serif; margin-bottom: 8px; }
     .hero-title { font-family: 'Montserrat', 'Manjari', sans-serif; font-size: clamp(2rem, 8vw, 3.2rem); letter-spacing: 5px; color: #fff; line-height: 1.05; }
-    .hero-tag { font-size: .9rem; color: rgba(255,255,255,.75); margin-top: 8px; }
+    .hero-tag { font-size: .9rem; color: rgba(255,255,255,.8); margin-top: 8px; }
     .hero-meta { display: flex; justify-content: center; gap: 18px; flex-wrap: wrap; margin-top: 14px; }
-    .hero-meta span { font-size: .72rem; color: rgba(255,255,255,.65); font-family: 'Inter', 'Manjari', sans-serif; }
+    .hero-meta span { font-size: .72rem; color: rgba(255,255,255,.7); font-family: 'Inter', 'Manjari', sans-serif; }
+
+    /* HERO QUICK ACTIONS */
+    .hero-actions { display: grid; grid-template-columns: repeat(2, minmax(120px, 1fr)); gap: 10px; max-width: 340px; margin: 22px auto 0; }
+    .hero-action-btn { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 12px 10px; border-radius: 30px; background: rgba(255,255,255,.16); backdrop-filter: blur(6px); color: #fff; text-decoration: none; font-size: .8rem; font-weight: 600; font-family: 'Inter', 'Manjari', sans-serif; border: 1px solid rgba(255,255,255,.25); transition: background .15s, transform .15s; }
+    .hero-action-btn:hover { background: rgba(255,255,255,.28); transform: translateY(-1px); }
+
+    /* HERO SEARCH */
+    .hero-search { max-width: 420px; margin: 20px auto 0; }
+    .hero-search .search-box-wrap { display: flex; gap: 8px; background: rgba(255,255,255,.14); backdrop-filter: blur(6px); padding: 6px; border-radius: 30px; border: 1px solid rgba(255,255,255,.22); }
+    .hero-search .search-input { flex: 1; border: none; background: transparent; padding: 10px 14px; color: #fff; font-size: .85rem; font-family: 'Inter', 'Manjari', sans-serif; }
+    .hero-search .search-input::placeholder { color: rgba(255,255,255,.6); }
+    .hero-search .search-input:focus { outline: none; }
+    .hero-search .search-btn { border: none; border-radius: 24px; padding: 10px 18px; color: #fff; font-weight: 600; font-size: .8rem; cursor: pointer; font-family: 'Inter', 'Manjari', sans-serif; }
+    .hero-search #searchResultBox { margin-top: 12px; text-align: left; }
 
     /* STATS */
     .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(76px, 1fr)); gap: 8px; padding: 16px; }

@@ -3967,9 +3967,38 @@ function generatePublicHTML() {
     .page-footer { text-align: center; padding: 28px 16px; margin-top: 20px; border-top: 1px solid var(--border); font-size: .65rem; color: var(--muted); font-family: 'Inter', 'Manjari', sans-serif; letter-spacing: 1px; }
 
     @media (max-width: 480px) { .leader-grid { grid-template-columns: 1fr 1fr; } }
+
+    /* INTRO SPLASH */
+    .intro-splash { position: fixed; inset: 0; z-index: 9999; background: radial-gradient(circle at 50% 30%, ${accent2}22, var(--bg) 70%); display: flex; align-items: center; justify-content: center; flex-direction: column; overflow: hidden; animation: introFadeOut .6s ease forwards; animation-delay: 2.4s; cursor: pointer; }
+    .intro-bg-glow { position: absolute; width: 60vw; max-width: 600px; height: 60vw; max-height: 600px; border-radius: 50%; background: radial-gradient(circle, ${primary}33, transparent 70%); animation: introPulse 3s ease-in-out infinite; }
+    .intro-bg-glow2 { position: absolute; width: 40vw; max-width: 400px; height: 40vw; max-height: 400px; border-radius: 50%; background: radial-gradient(circle, ${accent2}22, transparent 70%); animation: introPulse 3.6s ease-in-out infinite .4s; top: 60%; left: 65%; }
+    .intro-content { position: relative; z-index: 2; text-align: center; padding: 20px; }
+    .intro-logo { width: 84px; height: 84px; border-radius: 20px; object-fit: cover; margin: 0 auto 18px; display: block; animation: introPop .7s cubic-bezier(.34,1.56,.64,1) both; box-shadow: 0 8px 30px rgba(0,0,0,.4); }
+    .intro-title { font-family: 'Montserrat', 'Manjari', sans-serif; font-size: clamp(1.6rem, 7vw, 2.6rem); letter-spacing: 4px; color: #fff; animation: introSlideUp .7s ease .15s both; }
+    .intro-tagline { font-size: .85rem; color: rgba(255,255,255,.65); margin-top: 10px; animation: introSlideUp .7s ease .3s both; }
+    .intro-loader { width: 130px; height: 3px; background: rgba(255,255,255,.12); border-radius: 3px; margin: 26px auto 0; overflow: hidden; animation: introSlideUp .7s ease .45s both; }
+    .intro-loader-bar { height: 100%; width: 0%; background: ${accent2}; border-radius: 3px; animation: introLoad 2s ease forwards .35s; }
+    .intro-skip { margin-top: 22px; font-size: .65rem; letter-spacing: 1px; color: rgba(255,255,255,.4); animation: introSlideUp .7s ease .6s both; }
+    @keyframes introPop { 0% { opacity: 0; transform: scale(.6); } 100% { opacity: 1; transform: scale(1); } }
+    @keyframes introSlideUp { 0% { opacity: 0; transform: translateY(16px); } 100% { opacity: 1; transform: translateY(0); } }
+    @keyframes introPulse { 0%, 100% { transform: scale(1); opacity: .6; } 50% { transform: scale(1.15); opacity: .9; } }
+    @keyframes introLoad { 0% { width: 0%; } 100% { width: 100%; } }
+    @keyframes introFadeOut { 0% { opacity: 1; visibility: visible; } 99% { opacity: 0; visibility: visible; } 100% { opacity: 0; visibility: hidden; pointer-events: none; } }
   </style>
 </head>
 <body>
+  ${incHome ? `<div class="intro-splash" id="introSplash" onclick="document.getElementById('introSplash').style.animation='introFadeOut .4s ease forwards';document.body.style.overflow=''">
+    <div class="intro-bg-glow"></div>
+    <div class="intro-bg-glow2"></div>
+    <div class="intro-content">
+      ${posterLogo ? `<img src="${posterLogo}" class="intro-logo">` : ''}
+      <div class="intro-title">${esc(d.title)||'EVENT'}</div>
+      ${d.tagline ? `<div class="intro-tagline">${esc(d.tagline)}</div>` : ''}
+      <div class="intro-loader"><div class="intro-loader-bar"></div></div>
+      <div class="intro-skip">TAP TO SKIP</div>
+    </div>
+  </div>
+  <script>document.body.style.overflow='hidden';setTimeout(function(){document.body.style.overflow='';var s=document.getElementById('introSplash');if(s)s.remove();},3200);<\/script>` : ''}
   ${searchDataScript}
   ${galleryDataScript}
   <nav class="top-nav">

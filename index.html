@@ -1245,10 +1245,8 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
       </select>
     </div>
     <div class="form-field">
-      <label>COMPETITION</label>
-      <select class="form-input" id="regProgSel">
-        <option value="">— Select Competition —</option>
-      </select>
+      <label>COMPETITIONS <span style="color:var(--muted);font-weight:400">(select one or more)</span></label>
+      <div id="regProgCheckList" style="max-height:180px;overflow-y:auto;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:2px"></div>
     </div>
     <div class="form-field">
       <label>TEAM</label>
@@ -1840,10 +1838,12 @@ function openRegModal() {
   const cSel = document.getElementById('regCatSel');
   cSel.innerHTML = '<option value="">— Select Category —</option>' +
     cats.map(c=>`<option value="${c.id}">${c.emoji} ${esc(c.name)}</option>`).join('');
-  // populate competition dropdown
-  const prSel = document.getElementById('regProgSel');
-  prSel.innerHTML = '<option value="">— Select Competition —</option>' +
-    progs.map(p=>{const cat=cats.find(c=>c.id===p.catId);return`<option value="${p.id}">${esc(p.name)}${cat?' — '+esc(cat.name):''}${p.type?' ('+p.type+')':''}</option>`}).join('');
+  // populate competitions checklist
+  const prList = document.getElementById('regProgCheckList');
+  prList.innerHTML = progs.length ? progs.map(p=>{const cat=cats.find(c=>c.id===p.catId);return`<label style="display:flex;align-items:center;gap:8px;padding:6px 4px;cursor:pointer;font-size:.88rem">
+      <input type="checkbox" class="regProgCheck" value="${p.id}" style="width:16px;height:16px;flex-shrink:0;cursor:pointer">
+      <span>${esc(p.name)}${cat?' <span style="color:var(--muted)">— '+esc(cat.name)+'</span>':''}${p.type?' <span style="color:var(--muted)">('+p.type+')</span>':''}</span>
+    </label>`}).join('') : `<div style="color:var(--muted);font-size:.85rem;padding:6px 4px">No competitions added yet.</div>`;
   // populate team dropdown
   const tSel = document.getElementById('regTeamSel');
   tSel.innerHTML = '<option value="">— Select Team —</option>' +
@@ -1854,11 +1854,11 @@ function saveReg() {
   const name = document.getElementById('regName').value.trim();
   const chest = document.getElementById('regChest').value.trim();
   const catId = document.getElementById('regCatSel').value;
-  const progId = document.getElementById('regProgSel').value;
+  const progIds = Array.from(document.querySelectorAll('.regProgCheck:checked')).map(cb => cb.value);
   const teamId = document.getElementById('regTeamSel').value;
   if (!name) return showToast('Name required!', true);
   if (!chest) return showToast('Chest number required!', true);
-  if (!progId) return showToast('Select a competition!', true);
+  if (!progIds.length) return showToast('Select at least one competition!', true);
   if (!teamId) return showToast('Select a team!', true);
 
   // Find or create participant
@@ -1874,17 +1874,22 @@ function saveReg() {
     sd('pr_parts', parts);
   }
 
-  // Check duplicate registration
-  if (regs.find(r => r.partId===part.id && r.progId==progId)) return showToast('Already registered for this competition!', true);
-
-  regs.push({id:'r'+Date.now(), partId: part.id, progId, teamId, time:Date.now()});
+  // Register for each selected competition, skipping ones already registered
+  let added = 0, skipped = 0;
+  progIds.forEach(progId => {
+    if (regs.find(r => r.partId===part.id && r.progId==progId)) { skipped++; return; }
+    regs.push({id:'r'+Date.now()+'_'+progId, partId: part.id, progId, teamId, time:Date.now()});
+    added++;
+  });
   sd('pr_regs', regs);
 
   if (document.getElementById('nbPart')) document.getElementById('nbPart').textContent = parts.length;
   updateRegBadge();
   closeModal('regModal');
   renderRegistrations();
-  showToast('Registered ✓');
+  if (added && skipped) showToast(`Registered for ${added} competition(s) · ${skipped} already registered`);
+  else if (added) showToast(`Registered for ${added} competition(s) ✓`);
+  else showToast('Already registered for all selected competitions!', true);
 }
 function delReg(rid) {
   if (!confirm('Remove this registration?')) return;

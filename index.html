@@ -3723,6 +3723,8 @@ function generatePublicHTML() {
     return {...t, total, catBreak, ci: i, color: TEAM_PALETTE[i % TEAM_PALETTE.length]};
   }).sort((a,b) => b.total - a.total);
 
+  const standingsDataScript = `<script>window.__prStandings = ${JSON.stringify(standings.map(t=>({id:String(t.id),name:t.name,total:t.total,color:t.color})))};<\/script>`;
+
   // ── Build sections ──
   let homeSec = '', annSec = '', liveSec = '', leaderSec = '', gallerySec = '', postersSec = '';
   const navLinks = [];
@@ -3830,11 +3832,11 @@ function generatePublicHTML() {
       <h2 class="sec-title">📡 Live Division Standings</h2>
       ${!hasScores ? `<div class="empty-msg">Results not available yet.</div>` :
         `<div class="lb-wrap">
-          ${standings.map((t,i) => `<div class="lb-row${i<3?' lb-top'+(i+1):''}" style="--team-color:${t.color};animation-delay:${i*0.07}s">
+          ${standings.map((t,i) => `<div class="lb-row${i<3?' lb-top'+(i+1):''}" data-team-id="${esc(String(t.id))}" style="--team-color:${t.color};animation-delay:${i*0.07}s">
             ${i===0?'<span class="lb-crown">👑</span>':''}
             <span class="lb-rank${i<3?' lb-rank-top':''}">${i+1}</span>
             <span class="lb-name">${esc(t.name)}</span>
-            ${incScores ? `<span class="lb-pts" style="color:${i<3?'':accent2}">${t.total} pts</span>` : ''}
+            ${incScores ? `<span class="lb-pts" data-pts="${t.total}" style="color:${i<3?'':accent2}">${t.total} pts</span>` : ''}
           </div>`).join('')}
         </div>`}
     </section>`;
@@ -4219,6 +4221,7 @@ function generatePublicHTML() {
   </div>
   <script>document.body.style.overflow='hidden';setTimeout(function(){document.body.style.overflow='';var s=document.getElementById('introSplash');if(s)s.remove();},3200);<\/script>` : ''}
   ${searchDataScript}
+  ${standingsDataScript}
   ${galleryDataScript}
   <nav class="top-nav">
     <div class="nav-brand-row">
@@ -4230,21 +4233,120 @@ function generatePublicHTML() {
     </div>
   </nav>
   <script>
-    (function(){
+    document.addEventListener('DOMContentLoaded', function(){
+      // ── Nav pill scrollspy ──
       var links = document.querySelectorAll('#navPills .nav-link');
-      if (!links.length) return;
-      var sections = Array.from(links).map(function(a){ return document.querySelector(a.getAttribute('href')); }).filter(Boolean);
-      function setActive(id){
-        links.forEach(function(a){ a.classList.toggle('active', a.getAttribute('href') === '#'+id); });
+      if (links.length) {
+        var sections = Array.from(links).map(function(a){ return document.querySelector(a.getAttribute('href')); }).filter(Boolean);
+        function setActive(id){
+          links.forEach(function(a){ a.classList.toggle('active', a.getAttribute('href') === '#'+id); });
+        }
+        if ('IntersectionObserver' in window && sections.length) {
+          var obs = new IntersectionObserver(function(entries){
+            entries.forEach(function(e){ if (e.isIntersecting) setActive(e.target.id); });
+          }, { rootMargin: '-40% 0px -55% 0px', threshold: 0 });
+          sections.forEach(function(s){ obs.observe(s); });
+        }
+        links[0].classList.add('active');
       }
-      if ('IntersectionObserver' in window && sections.length) {
-        var obs = new IntersectionObserver(function(entries){
-          entries.forEach(function(e){ if (e.isIntersecting) setActive(e.target.id); });
-        }, { rootMargin: '-40% 0px -55% 0px', threshold: 0 });
-        sections.forEach(function(s){ obs.observe(s); });
-      }
-      links[0].classList.add('active');
-    })();
+
+      // ── Popper animation when a team's points have gone up since last visit ──
+      (function(){
+        if (!window.__prStandings || !window.__prStandings.length) return;
+        var STORE_KEY = 'pr_last_standings_' + location.pathname;
+        var prev = {};
+        try { prev = JSON.parse(localStorage.getItem(STORE_KEY) || '{}'); } catch(e){ prev = {}; }
+
+        var POP_COLORS = ['#FFD700','#FF6B4A','#3B82F6','#22C55E','#EC4899','#A855F7','#14B8A6'];
+        function burstPopper(row, color){
+          if (!row) return;
+          row.style.position = row.style.position || 'relative';
+          var n = 16;
+          for (var i = 0; i < n; i++) {
+            var p = document.createElement('span');
+            var isRound = Math.random() > 0.5;
+            var size = 5 + Math.random() * 5;
+            p.style.position = 'absolute';
+            p.style.left = (40 + Math.random() * 30) + '%';
+            p.style.top = '40%';
+            p.style.width = size + 'px';
+            p.style.height = size + 'px';
+            p.style.background = POP_COLORS[Math.floor(Math.random()*POP_COLORS.length)];
+            p.style.borderRadius = isRound ? '50%' : '2px';
+            p.style.pointerEvents = 'none';
+            p.style.zIndex = 5;
+            p.style.opacity = '1';
+            var dx = (Math.random() - 0.5) * 160;
+            var dy = -60 - Math.random() * 70;
+            var rot = (Math.random() - 0.5) * 400;
+            p.style.transition = 'transform .8s cubic-bezier(.2,.7,.3,1), opacity .8s ease .15s';
+            p.style.transform = 'translate(0,0) rotate(0deg)';
+            row.appendChild(p);
+            requestAnimationFrame(function(el, dx, dy, rot){
+              return function(){
+                requestAnimationFrame(function(){
+                  el.style.transform = 'translate(' + dx + 'px,' + dy + 'px) rotate(' + rot + 'deg)';
+                  el.style.opacity = '0';
+                });
+              };
+            }(p, dx, dy, rot));
+            (function(el){ setTimeout(function(){ el.remove(); }, 1000); })(p);
+          }
+          // brief highlight glow pulse on the row itself
+          row.style.transition = 'box-shadow .3s ease';
+          var oldShadow = row.style.boxShadow;
+          row.style.boxShadow = '0 0 0 2px ' + color + ', 0 6px 24px ' + color + '66';
+          setTimeout(function(){ row.style.boxShadow = oldShadow; }, 1400);
+
+          // floating "+N" gain badge
+        }
+        function floatGainBadge(row, gain, color){
+          if (!row || gain <= 0) return;
+          var badge = document.createElement('span');
+          badge.textContent = '+' + gain;
+          badge.style.position = 'absolute';
+          badge.style.right = '16px';
+          badge.style.top = '-6px';
+          badge.style.background = color;
+          badge.style.color = '#0a0a0f';
+          badge.style.fontFamily = "'Inter','Manjari',sans-serif";
+          badge.style.fontWeight = '800';
+          badge.style.fontSize = '.7rem';
+          badge.style.padding = '2px 8px';
+          badge.style.borderRadius = '10px';
+          badge.style.zIndex = 6;
+          badge.style.opacity = '0';
+          badge.style.transition = 'transform .6s ease, opacity .6s ease';
+          badge.style.transform = 'translateY(6px)';
+          row.appendChild(badge);
+          requestAnimationFrame(function(){
+            requestAnimationFrame(function(){
+              badge.style.opacity = '1';
+              badge.style.transform = 'translateY(-18px)';
+            });
+          });
+          setTimeout(function(){
+            badge.style.opacity = '0';
+            setTimeout(function(){ badge.remove(); }, 600);
+          }, 1800);
+        }
+
+        var hasPrevData = Object.keys(prev).length > 0;
+        window.__prStandings.forEach(function(t){
+          var row = document.querySelector('.lb-row[data-team-id="' + t.id + '"]');
+          if (!row) return;
+          var prevTotal = prev[t.id];
+          if (hasPrevData && typeof prevTotal === 'number' && t.total > prevTotal) {
+            var gain = t.total - prevTotal;
+            setTimeout(function(){ burstPopper(row, t.color); floatGainBadge(row, gain, t.color); }, 500 + Math.random()*300);
+          }
+        });
+
+        var toStore = {};
+        window.__prStandings.forEach(function(t){ toStore[t.id] = t.total; });
+        try { localStorage.setItem(STORE_KEY, JSON.stringify(toStore)); } catch(e){}
+      })();
+    });
   <\/script>
 
   ${incAnn && anns.length ? `<div class="notif-banner"><span class="notif-icon">${ANN_IC[anns[0].type]||'📢'}</span><span class="notif-text">${esc(anns[0].title)}${anns[0].msg ? ' — ' + esc(anns[0].msg) : ''}</span></div>` : ''}

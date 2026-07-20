@@ -303,8 +303,9 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
 .cd-nudge-btn:active{background:#4f8ff0}
 </style>
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, doc, getDoc, setDoc, onSnapshot, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, doc, getDoc, setDoc, deleteDoc, onSnapshot, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updatePassword, EmailAuthProvider, reauthenticateWithCredential, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyBFSOF-Vz7syihGrDUdbeu_z5fTHOskUvw",
@@ -318,10 +319,29 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
 
   const fbApp = initializeApp(firebaseConfig);
   const db = getFirestore(fbApp);
+  const auth = getAuth(fbApp);
   try { enableIndexedDbPersistence(db); } catch(e) {}
 
+  // Creates a brand-new Firebase Auth user WITHOUT disturbing the currently
+  // signed-in session (used when an admin adds a new user from Settings —
+  // normally createUserWithEmailAndPassword auto-signs-in as the new user,
+  // which would otherwise kick the admin out of their own session).
+  async function createUserIsolated(email, password){
+    const secondaryApp = initializeApp(firebaseConfig, 'Secondary_' + Date.now());
+    const secondaryAuth = getAuth(secondaryApp);
+    try {
+      const cred = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+      const uid = cred.user.uid;
+      try { await signOut(secondaryAuth); } catch(e){}
+      return uid;
+    } finally {
+      try { await deleteApp(secondaryApp); } catch(e){}
+    }
+  }
+
   // Expose to global scope for use in main script
-  window.__fb = { db, doc, getDoc, setDoc, onSnapshot };
+  window.__fb = { db, doc, getDoc, setDoc, deleteDoc, onSnapshot };
+  window.__fbAuth = { auth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updatePassword, EmailAuthProvider, reauthenticateWithCredential, signOut, createUserIsolated };
   window.__fbReady = true;
 </script>
 </head>
@@ -350,7 +370,7 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
       <div class="login-field"><label>GMAIL ID</label><input class="login-input" id="suEmail" type="email" placeholder="you@gmail.com" autocomplete="off"></div>
       <div class="login-field"><label>PASSWORD</label><input class="login-input" id="suPass" type="password" placeholder="Choose a password"></div>
       <div class="login-field"><label>CONFIRM PASSWORD</label><input class="login-input" id="suPass2" type="password" placeholder="Repeat password"></div>
-      <button class="login-btn" onclick="doSignup()" style="background:linear-gradient(135deg,var(--green),#00B860)">SIGN UP →</button>
+      <button class="login-btn" id="signupBtn" onclick="doSignup()" style="background:linear-gradient(135deg,var(--green),#00B860)">SIGN UP →</button>
       <div class="login-error" id="signupError">❌ Error</div>
       <div style="text-align:center;margin-top:14px">
         <span style="color:var(--muted);font-size:.78rem;font-family:'Inter','Manjari',sans-serif">Already have an account? </span>
@@ -1368,6 +1388,7 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
     <button class="modal-close" onclick="closeModal('userModal')">✕</button>
     <div class="modal-title">+ ADD USER</div>
     <div class="form-field"><label>USERNAME</label><input class="form-input" id="nuName" placeholder="Username"></div>
+    <div class="form-field"><label>GMAIL ID</label><input class="form-input" type="email" id="nuEmail" placeholder="you@gmail.com"></div>
     <div class="form-field"><label>PASSWORD</label><input class="form-input" type="password" id="nuPass" placeholder="Password"></div>
     <div class="modal-actions">
       <button class="btn btn-outline" onclick="closeModal('userModal')">Cancel</button>
@@ -1385,12 +1406,14 @@ const TE=['🔵','🔴','🟢','🟡','🩵','🟠','🩶','❤️','🟣','🩷
 const DN=['Team 1','Team 2','Team 3','Team 4','Team 5','Team 6','Team 7','Team 8','Team 9','Team 10'];
 
 // ═══ FIREBASE SYNC LAYER ═══
-// Each registered user gets their OWN private Firestore document, so no
-// two accounts ever see each other's event data. Only the login/account
-// list ('pr_users') lives in a single shared document — it just holds
-// usernames/passwords, nothing about event content.
-const FB_ACCOUNTS_DOC_ID = '_accounts'; // shared: login credentials only
-let FB_DOC_ID = null; // set after login: this user's own private data document
+// Each registered user gets their OWN private Firestore document, keyed by
+// their Firebase Auth UID, so Firestore security rules can actually enforce
+// that no account can read/write another account's data (this is real
+// database-level security, not just a client-side convention). Only the
+// login/account directory ('pr_users') lives in a single shared document —
+// it holds username → email/uid mappings, never any event content.
+const FB_ACCOUNTS_DOC_ID = '_accounts'; // shared: account directory only
+let FB_DOC_ID = null; // set after login: this user's own private data document ('user_<uid>')
 let fbData = {}; // local cache mirroring the CURRENT user's Firestore doc fields
 let fbAccountsData = {}; // local cache mirroring the shared accounts doc
 let fbReady = false;
@@ -1398,9 +1421,24 @@ let fbSuppressEcho = false;
 let fbUnsubscribe = null; // unsubscribe fn for the active per-user listener
 
 function dataDocIdFor(username){
-  // 'admin' keeps the original document so existing data isn't lost;
-  // every other user (existing or new) gets their own private document.
-  return username === 'admin' ? 'main' : ('user_' + username);
+  // Real security requires each user's document to be keyed by their
+  // Firebase Auth UID (Firestore rules can verify request.auth.uid against
+  // this). Until a legacy user has logged in once post-migration (which
+  // creates their Firebase Auth account and assigns a uid), we fall back
+  // to a per-username holding area — this only ever matters for the brief
+  // moment before their first login completes the migration.
+  const u = users.find(x => x.username === username);
+  if (u && u.uid) return 'user_' + u.uid;
+  return 'legacy_pending_' + username;
+}
+function emailForUsername(username){
+  const u = users.find(x => x.username === username);
+  if (u && u.email) return u.email;
+  // Legacy accounts created before Gmail ID was collected: give them a
+  // deterministic placeholder email so Firebase Auth can be created for
+  // them transparently, without changing how they log in (still by
+  // username). This email is never shown to the user.
+  return username.toLowerCase().replace(/[^a-z0-9._-]/g,'') + '@proresult.local';
 }
 function nsKey(k){
   // The account list is intentionally shared/global — never namespaced.
@@ -1543,15 +1581,55 @@ async function doLogin(){
   const btn = document.querySelector('.login-btn');
   const origText = btn.textContent;
   btn.textContent = 'Checking...'; btn.disabled = true;
-  // quick re-sync of the shared accounts list only, so login works with the
-  // latest password from any device. This never touches per-user event data.
+  // quick re-sync of the shared accounts directory only, so login works with
+  // the latest info from any device. This never touches per-user event data.
   try { await initAccountsSync(); users = ld('pr_users', users); } catch(e){}
-  btn.textContent = origText; btn.disabled = false;
 
   const u=document.getElementById('liUser').value.trim();
   const p=document.getElementById('liPass').value;
-  const f=users.find(x=>x.username===u&&x.password===p);
-  if(!f){document.getElementById('loginError').style.display='block';document.getElementById('liPass').value='';return}
+  const f=users.find(x=>x.username===u);
+  if(!f){ btn.textContent = origText; btn.disabled = false; document.getElementById('loginError').style.display='block';document.getElementById('liPass').value='';return }
+
+  const { auth, signInWithEmailAndPassword, createUserWithEmailAndPassword } = window.__fbAuth || {};
+  const email = emailForUsername(f.username);
+
+  try {
+    if (f.uid) {
+      // Already migrated to Firebase Auth — real, server-verified login.
+      btn.textContent = 'Signing in...';
+      await signInWithEmailAndPassword(auth, email, p);
+    } else {
+      // Legacy account created before Firebase Auth was added. Verify against
+      // the old stored password once, then transparently create their real
+      // Firebase Auth account and migrate their data document — the user
+      // notices nothing different, they just typed username + password as always.
+      if (f.password !== p) { throw { code: 'legacy-wrong-password' }; }
+      btn.textContent = 'Upgrading account security...';
+      const cred = await createUserWithEmailAndPassword(auth, email, p);
+      const newUid = cred.user.uid;
+      const oldDocId = f.username === 'admin' ? 'main' : ('user_' + f.username);
+
+      // Copy the old data document over to the new UID-keyed document.
+      try {
+        const { db, doc, getDoc, setDoc, deleteDoc } = window.__fb;
+        const oldSnap = await getDoc(doc(db, 'proresult', oldDocId));
+        if (oldSnap.exists()) {
+          await setDoc(doc(db, 'proresult', 'user_' + newUid), oldSnap.data());
+          try { await deleteDoc(doc(db, 'proresult', oldDocId)); } catch(e){}
+        }
+      } catch(e) { console.warn('Data migration copy failed:', e.message); }
+
+      // Update this user's directory record: add uid/email, drop the plaintext password.
+      users = users.map(x => x.username === f.username ? { username: x.username, email, isAdmin: x.isAdmin, uid: newUid } : x);
+      f.uid = newUid; f.email = email;
+      sd('pr_users', users);
+    }
+  } catch(err) {
+    btn.textContent = origText; btn.disabled = false;
+    document.getElementById('loginError').style.display='block';
+    document.getElementById('liPass').value='';
+    return;
+  }
 
   // Detach any previous user's live Firestore listener BEFORE switching
   // accounts, otherwise its callback keeps firing after login and writes
@@ -1638,7 +1716,7 @@ function emergencyReset(){
   document.getElementById('liPass').value='';
   showLoginToast('Reset complete! Password: dh@2026');
 }
-function doSignup(){
+async function doSignup(){
   const u=document.getElementById('suUser').value.trim();
   const email=document.getElementById('suEmail').value.trim().toLowerCase();
   const p=document.getElementById('suPass').value;
@@ -1651,12 +1729,26 @@ function doSignup(){
   if(users.find(x=>x.email===email)){err.style.display='block';err.textContent='Gmail ID already registered';return}
   if(p.length<4){err.style.display='block';err.textContent='Min 4 characters for password';return}
   if(p!==p2){err.style.display='block';err.textContent='Passwords do not match';return}
-  users.push({username:u,email:email,password:p,isAdmin:false});
-  sd('pr_users',users);
-  toggleSignup(false);
-  document.getElementById('liUser').value=u;
-  document.getElementById('liPass').value='';
-  showLoginToast('Account created! Please login.');
+
+  const btn = document.getElementById('signupBtn');
+  const origText = btn ? btn.textContent : '';
+  if (btn) { btn.textContent = 'Creating account...'; btn.disabled = true; }
+
+  try {
+    const { auth, createUserWithEmailAndPassword } = window.__fbAuth || {};
+    const cred = await createUserWithEmailAndPassword(auth, email, p);
+    users.push({username:u, email:email, isAdmin:false, uid: cred.user.uid});
+    sd('pr_users',users);
+    toggleSignup(false);
+    document.getElementById('liUser').value=u;
+    document.getElementById('liPass').value='';
+    showLoginToast('Account created! Please login.');
+  } catch(e) {
+    err.style.display='block';
+    err.textContent = e && e.code === 'auth/email-already-in-use' ? 'This Gmail ID is already registered' : 'Could not create account — check internet and try again';
+  } finally {
+    if (btn) { btn.textContent = origText; btn.disabled = false; }
+  }
 }
 function showLoginToast(msg){
   let t=document.getElementById('loginToast');
@@ -1673,6 +1765,7 @@ function doLogout(){
   fbData = {};
   FB_DOC_ID = null;
   curUser=null;
+  try { if (window.__fbAuth) window.__fbAuth.signOut(window.__fbAuth.auth); } catch(e){}
   document.getElementById('appShell').style.display='none';document.getElementById('loginPage').style.display='flex';document.getElementById('liUser').value='';document.getElementById('liPass').value='';document.getElementById('loginError').style.display='none';
 }
 window.addEventListener('popstate',function(){if(curUser){history.pushState({loggedIn:true},'');}else{document.getElementById('appShell').style.display='none';document.getElementById('loginPage').style.display='flex';}});
@@ -5313,26 +5406,55 @@ function clearData(type) {
   showToast(`${labels[type]} cleared ✓`);
   renderDash();
 }
-function changePassword(){
+async function changePassword(){
   const cur=document.getElementById('curPass').value;
   const nw=document.getElementById('newPass').value;
   const cn=document.getElementById('conPass').value;
   const msg=document.getElementById('passMsg');
-  if(!users.find(x=>x.username===curUser.username&&x.password===cur)){msg.style.display='block';msg.style.color='var(--red)';msg.textContent='❌ Wrong current password';return}
+  msg.style.display='none';
   if(nw.length<4){msg.style.display='block';msg.style.color='var(--red)';msg.textContent='❌ Minimum 4 characters';return}
   if(nw!==cn){msg.style.display='block';msg.style.color='var(--red)';msg.textContent='❌ Passwords do not match';return}
-  users=users.map(x=>x.username===curUser.username?{...x,password:nw}:x);
-  curUser.password=nw;sd('pr_users',users);
-  msg.style.display='block';msg.style.color='var(--green)';msg.textContent='✅ Password changed!';
-  ['curPass','newPass','conPass'].forEach(id=>document.getElementById(id).value='');
+
+  const { auth, EmailAuthProvider, reauthenticateWithCredential, updatePassword } = window.__fbAuth || {};
+  if (!auth || !auth.currentUser) { msg.style.display='block';msg.style.color='var(--red)';msg.textContent='❌ Not signed in — please re-login and try again';return }
+
+  try {
+    const credential = EmailAuthProvider.credential(auth.currentUser.email, cur);
+    await reauthenticateWithCredential(auth.currentUser, credential);
+    await updatePassword(auth.currentUser, nw);
+    msg.style.display='block';msg.style.color='var(--green)';msg.textContent='✅ Password changed!';
+    ['curPass','newPass','conPass'].forEach(id=>document.getElementById(id).value='');
+  } catch(e) {
+    msg.style.display='block';msg.style.color='var(--red)';
+    msg.textContent = e && e.code === 'auth/wrong-password' ? '❌ Wrong current password' : '❌ Could not change password — check internet';
+  }
 }
 function openUserModal(){openModal('userModal')}
-function saveUser(){
+async function saveUser(){
   const n=document.getElementById('nuName').value.trim();
+  const email=document.getElementById('nuEmail').value.trim().toLowerCase();
   const p=document.getElementById('nuPass').value;
-  if(!n||!p) return showToast('All fields required!',true);
+  if(!n||!p||!email) return showToast('All fields required!',true);
   if(users.find(u=>u.username===n)) return showToast('Username exists!',true);
-  users.push({username:n,password:p});sd('pr_users',users);closeModal('userModal');renderSettings();showToast('User added ✓');
+  if(users.find(u=>u.email===email)) return showToast('Gmail ID already registered!',true);
+  if(p.length<4) return showToast('Password min 4 characters!',true);
+
+  const saveBtn = document.querySelector('#userModal .btn-primary');
+  const origText = saveBtn ? saveBtn.textContent : '';
+  if (saveBtn) { saveBtn.textContent = 'Creating...'; saveBtn.disabled = true; }
+  try {
+    const uid = await window.__fbAuth.createUserIsolated(email, p);
+    users.push({username:n, email, isAdmin:false, uid});
+    sd('pr_users',users);
+    closeModal('userModal');
+    renderSettings();
+    showToast('User added ✓');
+    ['nuName','nuEmail','nuPass'].forEach(id=>document.getElementById(id).value='');
+  } catch(e) {
+    showToast(e && e.code === 'auth/email-already-in-use' ? 'This Gmail ID is already registered' : 'Could not create user — check internet', true);
+  } finally {
+    if (saveBtn) { saveBtn.textContent = origText; saveBtn.disabled = false; }
+  }
 }
 function delUser(n){
   if(n===curUser.username) return showToast("Can't delete yourself!",true);

@@ -1167,10 +1167,19 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
           </div>
         </div>
 
+        <!-- ALL USERS' DATA (Admin only) -->
+        <div style="max-width:700px;margin-top:16px">
+          <div class="card" id="allUsersDataCard" style="display:none;border:1px solid rgba(36,125,225,.2);background:rgba(36,125,225,.03)">
+            <div class="card-title">👥 All Users' Data (Admin)</div>
+            <div style="font-size:.72rem;color:var(--muted);margin-bottom:10px">Ella registered user-ntെയും ഡാറ്റ ഇവിടെ നിന്ന് കാണാനും, ആവശ്യമെങ്കിൽ ക്ലിയർ ചെയ്യാനും സാധിക്കും.</div>
+            <div id="allUsersDataList"></div>
+          </div>
+        </div>
+
         <!-- CLEAR DATA -->
         <div style="max-width:700px;margin-top:16px">
           <div class="card" style="border:1px solid rgba(224,52,79,.2);background:rgba(224,52,79,.03)">
-            <div class="card-title" style="color:var(--red)">🗑 Clear Data</div>
+            <div class="card-title" style="color:var(--red)">🗑 Clear Data <span style="font-weight:400;font-size:.68rem;color:var(--muted)">(my account)</span></div>
             <div style="display:flex;flex-direction:column;gap:10px">
               <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(0,0,0,.06)">
                 <div><div style="font-size:.85rem;font-weight:600">Participants & Registrations</div><div style="font-size:.72rem;color:var(--muted)">Parts list, registrations clear ആകും</div></div>
@@ -5161,6 +5170,112 @@ function renderSettings(){
       </div>
       ${i>0?`<button class="btn btn-red btn-xs" onclick="delUser('${u.username}')">Remove</button>`:'<span style="font-size:.68rem;color:var(--muted)">Owner</span>'}
     </div>`).join('');
+  renderAllUsersData();
+}
+
+// ═══ ADMIN: ALL USERS' DATA ═══
+async function renderAllUsersData(){
+  const card = document.getElementById('allUsersDataCard');
+  if (!card) return;
+  const isAdmin = curUser && (curUser.username==='admin' || curUser.isAdmin===true);
+  card.style.display = isAdmin ? 'block' : 'none';
+  if (!isAdmin) return;
+  const list = document.getElementById('allUsersDataList');
+  list.innerHTML = users.map(u=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05)">
+      <div style="display:flex;align-items:center;gap:8px;min-width:0">
+        <div class="user-avatar" style="width:28px;height:28px;font-size:.8rem;flex-shrink:0">${u.username[0].toUpperCase()}</div>
+        <div style="min-width:0">
+          <div style="font-size:.86rem;font-weight:600">${esc(u.username)}${u.email?` <span style="color:var(--muted);font-weight:400;font-size:.7rem">${esc(u.email)}</span>`:''}</div>
+          <div style="font-size:.7rem;color:var(--muted)" id="userSummary_${esc(u.username)}">Loading…</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <button class="btn btn-outline btn-xs" onclick="viewUserData('${esc(u.username)}')">View</button>
+        <button class="btn btn-red btn-xs" onclick="clearUserData('${esc(u.username)}')">Clear</button>
+      </div>
+    </div>`).join('');
+  users.forEach(u => loadUserSummary(u.username));
+}
+
+async function fetchUserDoc(username){
+  if (!window.__fbReady || !window.__fb) return null;
+  const { db, doc, getDoc } = window.__fb;
+  const docId = dataDocIdFor(username);
+  try {
+    const snap = await getDoc(doc(db,'proresult', docId));
+    if (!snap.exists()) return {};
+    const raw = snap.data();
+    const parsed = {};
+    Object.keys(raw).forEach(k => { try { parsed[k] = JSON.parse(raw[k]); } catch(e){ parsed[k]=raw[k]; } });
+    return parsed;
+  } catch(e){ console.warn('fetchUserDoc failed', e.message); return null; }
+}
+
+async function loadUserSummary(username){
+  const el = document.getElementById('userSummary_'+username);
+  if (!el) return;
+  const data = await fetchUserDoc(username);
+  if (data === null) { el.textContent = 'Offline / fetch failed'; return; }
+  const nTeams=(data.pr_teams||[]).filter(t=>t.members&&t.members.length).length;
+  const nProgs=(data.pr_progs||[]).length, nParts=(data.pr_parts||[]).length, nAnns=(data.pr_anns||[]).length;
+  el.textContent = `${nProgs} programs · ${nParts} participants · ${nAnns} announcements`;
+}
+
+async function viewUserData(username){
+  showToast(`Loading ${username}'s data…`);
+  const data = await fetchUserDoc(username);
+  if (data === null) return showToast('Failed to load (check internet)', true);
+  const teamsN=(data.pr_teams||[]).filter(t=>t.members&&t.members.length).length;
+  const catsN=(data.pr_cats||[]).length, progsN=(data.pr_progs||[]).length, partsN=(data.pr_parts||[]).length;
+  const regsN=(data.pr_regs||[]).length, annsN=(data.pr_anns||[]).length, histN=(data.pr_hist||[]).length;
+  const home = data.pr_home || {};
+  alert(
+    `${username}'s Data\n\n` +
+    `Event: ${home.title || '(not set)'}\n` +
+    `Teams with members: ${teamsN}\n` +
+    `Categories: ${catsN}\n` +
+    `Programs: ${progsN}\n` +
+    `Participants: ${partsN}\n` +
+    `Registrations: ${regsN}\n` +
+    `Announcements: ${annsN}\n` +
+    `History entries: ${histN}`
+  );
+}
+
+async function clearUserData(username){
+  if (!confirm(`"${username}" -ന്റെ ELLA DATA-yum clear ചെയ്യണോ?`)) return;
+  if (!confirm(`ഉറപ്പാണോ? Teams, programs, participants, scores, announcements ഇവയെല്ലാം "${username}" -ന് permanent ആയി നീങ്ങും. ഇത് undo ചെയ്യാൻ പറ്റില്ല.`)) return;
+  if (!window.__fbReady || !window.__fb) return showToast('Offline — cannot clear remote data', true);
+  const { db, doc, setDoc } = window.__fb;
+  const docId = dataDocIdFor(username);
+  const emptyDefaults = {
+    pr_teams: JSON.stringify(Array.from({length:10},(_,i)=>({id:i,name:DN[i],members:[]}))),
+    pr_cats: JSON.stringify([]),
+    pr_progs: JSON.stringify([]),
+    pr_parts: JSON.stringify([]),
+    pr_regs: JSON.stringify([]),
+    pr_anns: JSON.stringify([]),
+    pr_hist: JSON.stringify([]),
+    pr_attendance: JSON.stringify({}),
+    pr_me_judges: JSON.stringify({}),
+    pr_home: JSON.stringify({title:'',tagline:'',date:'',venue:'',desc:'',org:'',contact:'',primary:'#247DE1',accent:'#1A5FB4'}),
+    pr_live: JSON.stringify({enabled:false, showScores:true, showCategory:true}),
+    pr_poster_tpl: JSON.stringify({eventName:'Annual Arts Fest 2026', edition:'', org:'', venue:'', desc:'', accent:'#e8d84a', date:''}),
+    pr_poster_bg_choice: JSON.stringify('2')
+  };
+  try {
+    await setDoc(doc(db,'proresult', docId), emptyDefaults);
+    showToast(`${username}'s data cleared ✓`);
+    loadUserSummary(username);
+    if (curUser && curUser.username === username) {
+      fbData = {};
+      reloadAllData();
+      renderDash();
+    }
+  } catch(e) {
+    showToast('Failed to clear (check internet)', true);
+  }
 }
 function clearData(type) {
   const labels = {

@@ -824,6 +824,10 @@ footer.app-footer{text-align:center;padding:24px 0 18px;color:var(--muted);font-
             </label>
           </div>
         </div>
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-title">📱 EVENT QR CODE</div>
+          <div id="eventQRBox"></div>
+        </div>
         <div class="card">
           <div class="card-title">CURRENT LIVE STANDINGS</div>
           <div id="liveResultsPreview"></div>
@@ -3119,6 +3123,7 @@ function renderLiveResults() {
   if (ss) ss.checked = liveSettings.showScores;
   const sc = document.getElementById('liveShowCategory');
   if (sc) sc.checked = liveSettings.showCategory;
+  renderEventQR();
   const prev = document.getElementById('liveResultsPreview');
   if (!prev) return;
   const standings = teams.map(t => {
@@ -3141,6 +3146,67 @@ function renderLiveResults() {
       <td style="font-family:'Inter','Manjari',sans-serif;font-weight:700;color:var(--gold)">${t.total}</td>
     </tr>`).join('')}
     </tbody></table></div>`;
+}
+
+function getPublicLiveResultsUrl() {
+  let url = (localStorage.getItem('pr_github_url') || '').trim();
+  if (!url) return '';
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+  url = url.replace(/#.*$/, '').replace(/\/$/, '');
+  return url + '/#results';
+}
+
+function renderEventQR() {
+  const box = document.getElementById('eventQRBox');
+  if (!box) return;
+  const url = getPublicLiveResultsUrl();
+  const eventName = (homeData && homeData.title) ? homeData.title : 'Your Event';
+  if (!url) {
+    box.innerHTML = `<div style="text-align:center;padding:18px 10px">
+      <div style="font-size:.8rem;color:var(--muted);margin-bottom:10px">QR code generate ചെയ്യാൻ ആദ്യം നിങ്ങളുടെ published site link ചേർക്കുക.</div>
+      <button class="btn btn-primary btn-sm" onclick="showPage('publish')">Go to Publish →</button>
+    </div>`;
+    return;
+  }
+  box.innerHTML = `<div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap">
+    <img id="eventQRImg" src="${qrUrl(url, 220)}" style="width:160px;height:160px;border-radius:10px;background:#fff;padding:8px;flex-shrink:0" loading="lazy">
+    <div style="min-width:200px;flex:1">
+      <div style="font-family:'Montserrat','Manjari',sans-serif;font-size:1rem;font-weight:700;color:var(--text)">${esc(eventName)}</div>
+      <div style="font-size:.72rem;color:var(--muted);margin-top:4px;word-break:break-all">${esc(url)}</div>
+      <div style="font-size:.7rem;color:var(--muted);margin-top:8px">Scan ചെയ്താൽ ഈ event-ന്റെ Live Results നേരിട്ട് തുറക്കും. Event link മാറ്റുന്നതനുസരിച്ച് ഈ QR ഉം unique ആയിരിക്കും.</div>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+        <button class="btn btn-outline btn-sm" onclick="downloadEventQR()">⬇️ Download QR</button>
+        <button class="btn btn-outline btn-sm" onclick="window.open('${url}','_blank')">🔗 Open Link</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function downloadEventQR() {
+  const url = getPublicLiveResultsUrl();
+  if (!url) return;
+  const eventName = (homeData && homeData.title) ? homeData.title : 'Event';
+  const w = window.open('', '_blank');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>QR - ${esc(eventName)}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Inter:wght@400;600;700&family=Manjari:wght@400;700&display=swap" rel="stylesheet">
+  <style>*{box-sizing:border-box;margin:0;padding:0}body{background:#222;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;font-family:'Inter',sans-serif}
+  @media print{body{background:white}}</style>
+  </head><body>
+  <div style="width:320px;background:linear-gradient(135deg,#1a1a2e,#0d0d1a);border-radius:18px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.3)">
+    <div style="background:linear-gradient(135deg,#247DE1,#247DE166);padding:14px;text-align:center">
+      <div style="font-family:'Montserrat',sans-serif;font-size:.85rem;letter-spacing:3px;color:#fff">SCAN FOR LIVE RESULTS</div>
+    </div>
+    <div style="padding:24px;text-align:center">
+      <img src="${qrUrl(url, 260)}" style="width:230px;height:230px;border-radius:10px;background:#fff;padding:10px">
+      <div style="font-family:'Montserrat',sans-serif;font-size:1.2rem;color:#fff;margin-top:16px">${esc(eventName)}</div>
+      <div style="font-size:.7rem;color:#888;margin-top:6px;word-break:break-all">${esc(url)}</div>
+    </div>
+    <div style="text-align:center;padding:10px;border-top:1px solid rgba(255,255,255,.08)">
+      <div style="font-size:.6rem;color:#555;letter-spacing:1px">PRORESULT · DEZIGN HUB</div>
+    </div>
+  </div>
+  <script>window.onload=()=>setTimeout(()=>window.print(),900)<\/script></body></html>`);
+  w.document.close(); w.focus();
 }
 
 // ═══ LEADERBOARD ═══
